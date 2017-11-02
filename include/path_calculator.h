@@ -17,14 +17,18 @@ public:
     struct TalonPoint {
         float position;
         float velocity;
+		  float step;
         cv::Point2f display_point;
         TalonPoint(float position, float velocity, cv::Point2f display_point)
         {
+            this->step = step;
             this->display_point = display_point;
             this->position = position;
             this->velocity = velocity;
         }
     };
+
+	 float step;
     std::vector<TalonPoint> path_left;
     std::vector<TalonPoint> path_right;
     Path(tinyspline::BSpline* spline, float wheel_distance, float step);

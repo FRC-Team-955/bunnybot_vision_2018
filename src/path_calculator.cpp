@@ -50,6 +50,7 @@ void PathCalculator::render()
 
 Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 {
+	this->step = step;
 	auto derive = spline->derive();
 	float i = 0.0;
 	cv::Point2f left_last(0.0, 0.0);
@@ -60,16 +61,26 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		auto point_sp = spline->evaluate(i).result();
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
 		auto point_dr = derive.evaluate(i).result();
+
 		float dist = sqrtf(powf(point_dr[0], 2) + powf(point_dr[1], 2));
-		i += step / dist;
-		cv::Point2f left = MiscMath::MoveAlongLine(true, wheel_distance, MiscMath::NegativeReciprocal(point_dr[1] / point_dr[0]), point_sp_cv);
-		cv::Point2f right = MiscMath::MoveAlongLine(false, wheel_distance, MiscMath::NegativeReciprocal(point_dr[1] / point_dr[0]), point_sp_cv);
+		float slope = point_dr[1] / point_dr[0];
+
+		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+
 		float left_distance = MiscMath::PointDistance(left, left_last);
 		float right_distance = MiscMath::PointDistance(right, right_last);
+
 		left_accum += left_distance;
 		right_accum += right_distance;
+
 		path_left.push_back(TalonPoint(left_accum, left_distance, left));
 		path_right.push_back(TalonPoint(right_accum, right_distance, right));
+
+		left_last = left;
+		right_last = right;
+
+		i += step / dist;
 	}
 }
 
@@ -80,17 +91,27 @@ cv::Rect2f PathCalculator::get_size()
 
 void Path::render()
 {
-	glColor3f(0.0, 0.0, 1.0);
+	glColor3f(0.0, 0.0, 0.0);
 	glPointSize(9);
-	glBegin(GL_POINTS);
-	glColor3f(1.0, 0.0, 1.0);
+	glBegin(GL_LINES);
+
+	glVertex2f(path_left.front().display_point.x, path_left.front().display_point.y);
 	for (auto& left : this->path_left) {
+		glColor3f(1.0, fabs(step / left.velocity), fabs(step / left.velocity));
+		glVertex2f(left.display_point.x, left.display_point.y);
 		glVertex2f(left.display_point.x, left.display_point.y);
 	}
+	glVertex2f(path_left.back().display_point.x, path_left.back().display_point.y);
+
+	glVertex2f(path_right.front().display_point.x, path_right.front().display_point.y);
 	glColor3f(0.0, 1.0, 1.0);
 	for (auto& right : this->path_right) {
+		glColor3f(fabs(step / right.velocity), 1.0, fabs(step / right.velocity));
+		glVertex2f(right.display_point.x, right.display_point.y);
 		glVertex2f(right.display_point.x, right.display_point.y);
 	}
+	glVertex2f(path_right.back().display_point.x, path_right.back().display_point.y);
+
 	glEnd();
 }
 
