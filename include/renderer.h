@@ -5,9 +5,10 @@
 #include <GL/glu.h>
 #include <renderable.h>
 #include <vector>
+#include <opencv2/opencv.hpp>
 namespace Renderer {
 	extern void init();
-	extern void update();
+	extern void update(bool upd_bound);
 	extern std::vector<Renderable *> objects;
 } // namespace Renderer
 #endif

@@ -1,7 +1,10 @@
 #ifndef SPLINE_RENDERWRAP_H
 #define SPLINE_RENDERWRAP_H
+#include <opencv2/opencv.hpp>
 #include <renderable.h>
 #include <tinysplinecpp.h>
+#include <misc_math.h>
+#include <cmath>
 class SplineRenderWrap : public Renderable {
 	private:
 		GLUnurbsObj *nurbs;
@@ -10,8 +13,6 @@ class SplineRenderWrap : public Renderable {
 	public:
 		SplineRenderWrap(tinyspline::BSpline *spline);
 		virtual void render();
-		virtual void get_size(float *min_x, float *max_x, float *min_y, float *max_y);
-		void add_spline(float r, float g, float b);
-		void add_points(float r, float g, float b);
+		virtual cv::Rect2f get_size();
 };
 #endif

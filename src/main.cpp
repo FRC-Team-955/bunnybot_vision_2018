@@ -10,47 +10,25 @@
 
 #include <renderable.h>
 #include <renderer.h>
-#include <spline_renderwrap.h>
+#include <path_calculator.h>
+#include <opencv2/opencv.hpp>
 
 int main() {
-	tinyspline::BSpline spline(6, 3, 3);
-	std::vector<tinyspline::real> ctrlp = spline.ctrlp();
-	ctrlp[0] = -1.75;
-	ctrlp[1] = -1.0;
-	ctrlp[2] = 0.0;
-
-	ctrlp[3] = -1.5;
-	ctrlp[4] = -0.5;
-	ctrlp[5] = 0.0;
-
-	ctrlp[6] = -1.5;
-	ctrlp[7] = 0.0;
-	ctrlp[8] = 0.0;
-
-	ctrlp[9] = -1.25;
-	ctrlp[10] = 0.5;
-	ctrlp[11] = 0.0;
-
-	ctrlp[12] = -0.75;
-	ctrlp[13] = 0.75;
-	ctrlp[14] = 0.0;
-
-	ctrlp[15] = 0.0;
-	ctrlp[16] = 0.5;
-	ctrlp[17] = 0.0;
-	spline.setCtrlp(ctrlp);
-
-	SplineRenderWrap *wrap = new SplineRenderWrap(&spline);
+	PathCalculator *calc = new PathCalculator(5.0, 0.5, 1.0, 0.01);
 	Renderer::init();
-	Renderer::objects.push_back(wrap);
+	Renderer::objects.push_back(calc);
 
+	const double pi = std::acos(-1);
+	calc->calculate_path(PathCalculator::Goal(cv::Point2f(5.0, 5.0), pi / 4));
+	Renderer::update(true);
 	while (true) {
-		for (int i = 0; i < spline.nCtrlp() * spline.dim(); i += spline.dim()) {
-			ctrlp[i] += (float)((rand() % 1000) - 500) / 10000.0;
-			ctrlp[i + 1] += (float)((rand() % 1000) - 500) / 10000.0;
+		for (float i = 0; i < 2*pi; i+= pi/512.0) {
+			auto path = calc->calculate_path(PathCalculator::Goal(cv::Point2f(5.0, 5.0), i));
+			//auto path = calc->calculate_path(PathCalculator::Goal(cv::Point2f(5.0, 5.0), pi * (6.0/4.0)));
+			Renderer::objects.push_back(&path);
+			Renderer::update(false);
+			Renderer::objects.pop_back();
+			std::this_thread::sleep_for(std::chrono::milliseconds(16));
 		}
-		spline.setCtrlp(ctrlp);
-		Renderer::update();
-		std::this_thread::sleep_for(std::chrono::milliseconds(16));
 	}
 }
