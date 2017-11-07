@@ -22,9 +22,8 @@ void SplineRenderWrap::render()
 	}
 }
 
-SplineRenderWrap::SplineRenderWrap(tinyspline::BSpline* spline)
+SplineRenderWrap::SplineRenderWrap()
 {
-    this->spline = spline;
     this->nurbs = gluNewNurbsRenderer();
     gluNurbsProperty(nurbs, GLU_SAMPLING_TOLERANCE, 10.0);
 }

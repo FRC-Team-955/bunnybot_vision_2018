@@ -8,11 +8,11 @@
 class SplineRenderWrap : public Renderable {
 	private:
 		GLUnurbsObj *nurbs;
-		tinyspline::BSpline *spline;
 
 	public:
-		SplineRenderWrap(tinyspline::BSpline *spline);
-		virtual void render();
-		virtual cv::Rect2f get_size();
+		tinyspline::BSpline* spline;
+		SplineRenderWrap();
+		void render();
+		cv::Rect2f get_size();
 };
 #endif

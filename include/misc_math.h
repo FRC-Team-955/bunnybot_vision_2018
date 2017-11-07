@@ -26,5 +26,7 @@ namespace MiscMath {
 	cv::Point2f FromCtrlpt(tinyspline::BSpline* spline, size_t index);
 
 	cv::Point2f RadialOffset(float radians, float distance, cv::Point2f offset);
-}
+
+	float LineSlope(cv::Point2f a, cv::Point2f b);
+	}
 #endif

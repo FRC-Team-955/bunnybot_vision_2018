@@ -1,33 +1,23 @@
-#include <chrono>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <ostream>
-#include <stdlib.h>
-#include <thread>
-
-#include <tinysplinecpp.h>
-
-#include <renderable.h>
 #include <renderer.h>
-#include <path_calculator.h>
+#include <goal_path_calculator.h>
 #include <opencv2/opencv.hpp>
 
 int main() {
-	PathCalculator *calc = new PathCalculator(5.0, 0.5, 0.2, 0.01);
+	GoalPathCalculator *calc = new GoalPathCalculator(0.5, 0.1);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
 	const double pi = std::acos(-1);
-	calc->calculate_path(PathCalculator::Goal(cv::Point2f(5.0, 5.0), pi / 4.0));
+	calc->calculate_path(cv::Point2f(5.0, 5.0), pi / 4.0);
 	Renderer::update(true);
 	while (true) {
-		for (float i = 0; i < 2*pi; i+= pi/512.0) {
-			auto path = calc->calculate_path(PathCalculator::Goal(cv::Point2f(5.0, 5.0), i));
+		//for (float i = -pi / 2.0; i < (pi / 7.0); i+= pi/512.0) {
+		for (float i = 0; i < (pi * 2.0); i+= pi/512.0) {
+			auto path = calc->calculate_path(cv::Point2f(5.0, 5.0), i);
+			//auto path = calc->calculate_path(cv::Point2f(5.0, 5.0), pi / 3);
 			Renderer::objects.push_back(&path);
 			Renderer::update(false);
 			Renderer::objects.pop_back();
-			std::this_thread::sleep_for(std::chrono::milliseconds(16));
 		}
 	}
 }

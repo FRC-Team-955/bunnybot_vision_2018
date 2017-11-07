@@ -57,3 +57,7 @@ cv::Point2f MiscMath::RadialOffset(float radians, float distance, cv::Point2f of
 			(std::cos(radians) * distance) + offset.x,
 			(std::sin(radians) * distance) + offset.y);
 }
+
+float MiscMath::LineSlope(cv::Point2f a, cv::Point2f b) {
+	return (b.y - a.y) / (b.x - a.x);
+}

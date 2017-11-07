@@ -86,7 +86,11 @@ void bound()
     gluOrtho2D(min_x, max_x, min_y, max_y);
 }
 bool update_bound = true;
-void update(bool upd_bound) { update_bound = upd_bound; glutMainLoopEvent(); }
+void update(bool upd_bound)
+{
+    update_bound = upd_bound;
+    glutMainLoopEvent();
+}
 
 void display()
 {

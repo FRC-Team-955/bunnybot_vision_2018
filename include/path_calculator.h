@@ -17,11 +17,9 @@ public:
     struct TalonPoint {
         float position;
         float velocity;
-		  float step;
         cv::Point2f display_point;
         TalonPoint(float position, float velocity, cv::Point2f display_point)
         {
-            this->step = step;
             this->display_point = display_point;
             this->position = position;
             this->velocity = velocity;
@@ -32,33 +30,18 @@ public:
     std::vector<TalonPoint> path_left;
     std::vector<TalonPoint> path_right;
     Path(tinyspline::BSpline* spline, float wheel_distance, float step);
-    virtual void render();
-    virtual cv::Rect2f get_size();
+    void render();
+    cv::Rect2f get_size();
+	 void color_by(float input);
 };
 
-class PathCalculator : public Renderable {
+class PathCalculator : public SplineRenderWrap {
 public:
-    struct Goal { // Contains a position and a vector for an endpoint
-        cv::Point2f position;
-        float direction; //Radians
-        Goal(cv::Point2f position, float direction)
-        {
-            this->position = position;
-            this->direction = direction;
-        }
-    };
-    PathCalculator(float interval, float outcrop, float wheel_distance, float step);
-    Path calculate_path(Goal goal);
-    virtual void render();
-    virtual cv::Rect2f get_size();
-
-private:
-    float step; //The step 
-    float wheel_distance; //Wheel distance from the center of the robot
-    float interval; //Milliseconds between each talon update
-    float outcrop; //How far to define the next point in the spline (Makes movements sharper at lower values)
-    tinyspline::BSpline* spline;
-    std::vector<tinyspline::real> ctrlp;
-    SplineRenderWrap* spline_renderer;
+	explicit PathCalculator(size_t ctrlp_count);
+	virtual Path calculate_path(cv::Point2f position, float direction)=0;
+	using SplineRenderWrap::render;
+	using SplineRenderWrap::get_size;
+	std::vector<tinyspline::real> ctrlp;
+	SplineRenderWrap* spline_renderer;
 };
 #endif
