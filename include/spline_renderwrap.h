@@ -10,7 +10,7 @@ class SplineRenderWrap : public Renderable {
 		GLUnurbsObj *nurbs;
 
 	public:
-		tinyspline::BSpline* spline;
+		tinyspline::BSpline* spline = nullptr;
 		SplineRenderWrap();
 		void render();
 		cv::Rect2f get_size();
