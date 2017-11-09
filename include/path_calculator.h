@@ -3,7 +3,7 @@
 #include <cmath>
 #include <misc_math.h>
 #include <opencv2/opencv.hpp>
-#include <spline_renderwrap.h>
+#include <renderable.h>
 #include <tinysplinecpp.h>
 #include <vector>
 /*

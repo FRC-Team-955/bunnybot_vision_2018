@@ -1,6 +1,7 @@
 #ifndef GOAL_PATH_CALCULATOR_H
 #define GOAL_PATH_CALCULATOR_H
 
+#include <spline_renderwrap.h>
 #include <path_calculator.h>
 class GoalPathCalculator : public SplineRenderWrap {
 	public:

@@ -20,8 +20,7 @@ Path GoalPathCalculator::calculate_path(cv::Point2f position, float direction) {
 	this->ctrlp[7] = 2.0 * this->wheel_distance;
 	this->ctrlp[8] = 0.0;
 
-	auto leading_a =
-		MiscMath::RadialOffset(direction, this->wheel_distance * 2.0, position);
+	auto leading_a = MiscMath::RadialOffset(direction, this->wheel_distance * 2.0, position);
 	this->ctrlp[9] = leading_a.x;
 	this->ctrlp[10] = leading_a.y;
 	this->ctrlp[11] = 0.0;
