@@ -1,11 +1,4 @@
 #include <path_calculator.h>
-
-PathCalculator::PathCalculator(size_t ctrlp_count) : SplineRenderWrap()
-{
-	this->spline = new tinyspline::BSpline(ctrlp_count, 3, 3); //Three dimensions, so we can display it later using native OpenGL functions
-	this->ctrlp = this->spline->ctrlp();
-}
-
 Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 {
 	this->step = step;

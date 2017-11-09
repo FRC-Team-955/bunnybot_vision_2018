@@ -34,14 +34,4 @@ public:
     cv::Rect2f get_size();
 	 void color_by(float input);
 };
-
-class PathCalculator : public SplineRenderWrap {
-public:
-	explicit PathCalculator(size_t ctrlp_count);
-	virtual Path calculate_path(cv::Point2f position, float direction)=0;
-	using SplineRenderWrap::render;
-	using SplineRenderWrap::get_size;
-	std::vector<tinyspline::real> ctrlp;
-	SplineRenderWrap* spline_renderer;
-};
 #endif

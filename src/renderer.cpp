@@ -7,7 +7,10 @@ size_t frame = 0;
 
 void clear() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 
-void reshape(int w, int h) { glViewport(0, 0, (GLsizei)w, (GLsizei)h); }
+void reshape(int w, int h) { 
+	int max = std::max(w, h);
+	glViewport(0, 0, (GLsizei)max, (GLsizei)max); 
+}
 
 void add_border(float r, float g, float b)
 {
