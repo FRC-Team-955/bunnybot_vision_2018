@@ -21,6 +21,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		//Calculate spline evaluations
 		auto point_sp = spline->evaluate(i).result();
 		auto point_dr = derive.evaluate(i).result();
+		auto point_dr_sq = derive_sq.evaluate(i).result();
 
 		//How much change in distance do we expect?
 		float dist = sqrtf(powf(point_dr[0], 2.0) + powf(point_dr[1], 2.0)); //Distance between this point and the next
@@ -50,14 +51,14 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		left_accum += left_distance;
 		right_accum += right_distance;
 
+		float pi = acos(-1);
+		float change_in_slope = atan2((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1]), point_dr[0] * point_dr[0]);
+		float biggeh_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
+		float biggeh_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
+
 		//Add path elements
-		//float pi = acosf(-1);
-		//bool rev_left = (left_distance - right_distance) / (dist * 2.0) > 1.0;
-		//bool rev_right = (right_distance - right_distance) / (dist * 2.0) > 1.0;
-		//path_left.push_back(TalonPoint(left_accum, rev_left ? -1 : 1, left)); 
-		//path_right.push_back(TalonPoint(right_accum, rev_right ? -1 : 1, right)); 
-		path_left.push_back(TalonPoint(left_accum, left_distance, left)); 
-		path_right.push_back(TalonPoint(right_accum, right_distance, right)); 
+		path_left.push_back(TalonPoint(left_accum, biggeh_left, left)); 
+		path_right.push_back(TalonPoint(right_accum, biggeh_right, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
@@ -65,7 +66,8 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		slope_last_left = slope_left;
 		slope_last_right = slope_right;
 
-		i += step / dist; //Increment over the line by step over distance
+		//i += step / dist; //Increment over the line by step over distance
+		i += point_dr[2] / step; //Increment over the line by step over distance
 	}
 }
 
@@ -81,6 +83,7 @@ void Path::render()
 {
 	glColor3f(0.0, 0.0, 0.0);
 	glPointSize(9);
+	//glBegin(GL_POINTS);
 	glBegin(GL_LINES);
 
 	glVertex2f(path_left.front().display_point.x, path_left.front().display_point.y);

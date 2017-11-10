@@ -86,7 +86,9 @@ void bound()
     min_x -= 1.0;
     max_y += 1.0;
     min_y -= 1.0;
-    gluOrtho2D(min_x, max_x, min_y, max_y);
+	 float min = std::min(min_x, min_y);
+	 float max = std::max(max_x, max_y);
+    gluOrtho2D(min, max, min, max);
 }
 bool update_bound = true;
 void update(bool upd_bound)
