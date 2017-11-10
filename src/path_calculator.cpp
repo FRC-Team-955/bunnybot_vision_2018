@@ -31,10 +31,8 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		//Create paths for each wheel
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		float norm = std::max(point_dr[0], point_dr[1]);
-		auto point_elongate = cv::Point2f(point_dr[1] / norm, point_dr[0] / norm) * wheel_distance;
-		cv::Point2f left = point_sp_cv + point_elongate;
-		cv::Point2f right = point_sp_cv - point_elongate;
+		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
 
 		//Get the distance travelled by each wheel
 		float left_distance = MiscMath::PointDistance(left, left_last);
@@ -55,12 +53,12 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		float pi = acos(-1);
 		float change_in_slope = atan2((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1]), point_dr[0] * point_dr[0]);
-		float biggeh_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
-		float biggeh_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
+		float reverse_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
+		float reverse_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
 
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, biggeh_left, left)); 
-		path_right.push_back(TalonPoint(right_accum, biggeh_right, right)); 
+		path_left.push_back(TalonPoint(left_accum, reverse_left * left_distance, left)); 
+		path_right.push_back(TalonPoint(right_accum, reverse_right * right_distance, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
