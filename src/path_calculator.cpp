@@ -31,8 +31,10 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		//Create paths for each wheel
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		float norm = std::max(point_dr[0], point_dr[1]);
+		auto point_elongate = cv::Point2f(point_dr[1] / norm, point_dr[0] / norm) * wheel_distance;
+		cv::Point2f left = point_sp_cv + point_elongate;
+		cv::Point2f right = point_sp_cv - point_elongate;
 
 		//Get the distance travelled by each wheel
 		float left_distance = MiscMath::PointDistance(left, left_last);
