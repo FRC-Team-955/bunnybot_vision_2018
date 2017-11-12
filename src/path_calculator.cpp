@@ -25,14 +25,20 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		//How much change in distance do we expect?
 		float dist = sqrtf(powf(point_dr[0], 2.0) + powf(point_dr[1], 2.0)); //Distance between this point and the next
+		//float dist = cv::norm(point_dr[0] - point_dr[1]);
 
 		//Slope of the center line
 		float slope = point_dr[1] / point_dr[0];
 
 		//Create paths for each wheel
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		auto norm = std::max(point_dr[1], point_dr[0]); 
+		auto point_dr_inv_cv = (cv::Point2f(-point_dr[1], point_dr[0]) / fabs(norm)) * wheel_distance;
+		//cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		//cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		cv::Point2f left = point_sp_cv + point_dr_inv_cv;
+		cv::Point2f right = point_sp_cv - point_dr_inv_cv;
+		//TODO: You're trying to just use vectors to get the perpendicular extended point, so you can use vectors and calculus to get the velocity of each extended point
 
 		//Get the distance travelled by each wheel
 		float left_distance = MiscMath::PointDistance(left, left_last);
@@ -66,8 +72,8 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		slope_last_left = slope_left;
 		slope_last_right = slope_right;
 
-		//i += step / dist; //Increment over the line by step over distance
-		i += point_dr[2] / step; //Increment over the line by step over distance
+		i += step / dist; //Increment over the line by step over distance
+		//i += point_dr[2] / step; //Increment over the line by step over distance
 	}
 }
 
@@ -141,4 +147,3 @@ cv::Rect2f Path::get_size()
     }
     return rect;
 }
-

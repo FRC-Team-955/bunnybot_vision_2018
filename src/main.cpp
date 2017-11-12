@@ -4,7 +4,7 @@
 
 typedef GoalPathCalculator GPC;
 int main() {
-	GPC *calc = new GPC(0.5, 100.0);
+	GPC *calc = new GPC(0.5, 1.0 / 100.0);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
@@ -13,7 +13,7 @@ int main() {
 	Renderer::update(true);
 
 	while (true) {
-		for (float i = 0; i < (pi * 2.0); i+= pi/512.0) {
+		for (float i = 0; i < (pi * 2.0); i+= pi/128.0) {
 			auto path = calc->calculate_path(i, cv::Point2f(5.0, 5.0));
 			Renderer::objects.push_back(&path);
 			Renderer::update(false);
