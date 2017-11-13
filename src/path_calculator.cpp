@@ -12,9 +12,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 	bool inflect_left = true;
 	bool inflect_right = true;
 
-	float slope_last_left = 1.0;
-	float slope_last_right = 1.0;
-
 	float i = 0.0;
 	while (i < 1.0) {
 		//Calculate spline evaluations
@@ -43,10 +40,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float left_distance = MiscMath::PointDistance(left, left_last);
 		float right_distance = MiscMath::PointDistance(right, right_last);
 
-		//Get the slope between each point
-		float slope_left = MiscMath::LineSlope(left, left_last);
-		float slope_right = MiscMath::LineSlope(right, right_last);
-
 		//Normalize distances
 		float max = std::max(left_distance, right_distance);
 		left_distance /= max;
@@ -69,8 +62,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		//Copy over positions and slope for next iteration
 		left_last = left;
 		right_last = right;
-		slope_last_left = slope_left;
-		slope_last_right = slope_right;
 
 		i += dist / step; //Increment over the line by step over distance
 	}
