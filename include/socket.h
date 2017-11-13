@@ -1,5 +1,5 @@
-#ifndef SOCKET_HPP
-#define SOCKET_HPP
+#ifndef SOCKET_H
+#define SOCKET_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

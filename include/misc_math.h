@@ -1,5 +1,5 @@
-#ifndef MISC_MATH_HPP
-#define MISC_MATH_HPP
+#ifndef MISC_MATH_H
+#define MISC_MATH_H
 #include <cmath>
 #include <opencv2/opencv.hpp>
 #include <tinysplinecpp.h>
