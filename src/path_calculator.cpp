@@ -46,15 +46,15 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float left_velocity = left_distance;// / dist;
 		float right_velocity = right_distance;// / dist;
 
-		float change_in_slope = atan2((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1]), point_dr[0] * point_dr[0]);
-		float reverse_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
-		float reverse_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
+		//Find change in angle
+		double change_in_slope = ((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1])) / powf(point_dr[0], 2.0);
+		double change_in_angle = (1.0 / (1.0 + powf(point_dr[1] / point_dr[0], 2.0))) * change_in_slope;
+		float reverse_left = change_in_angle > (pi / 1.0) ? -1.0 : 1.0;
+		float reverse_right = -change_in_angle > (pi / 1.0) ? -1.0 : 1.0;
 
 		//Add path elements
 		path_left.push_back(TalonPoint(left_accum, reverse_left * left_velocity, left)); 
 		path_right.push_back(TalonPoint(right_accum, reverse_right * right_velocity, right)); 
-		//path_left.push_back(TalonPoint(left_accum, dist / 10.0, left)); 
-		//path_right.push_back(TalonPoint(right_accum, dist / 10.0, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
