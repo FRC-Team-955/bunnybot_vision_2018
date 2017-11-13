@@ -15,27 +15,28 @@
 
 class Path : public Renderable {
 	public:
-		struct TalonPoint {
-			float position;
-			float velocity;
-			cv::Point2f display_point;
-			TalonPoint(float position, float velocity, cv::Point2f display_point)
-			{
-				this->display_point = display_point;
-				this->position = position;
-				this->velocity = velocity;
-			}
-		};
 		struct PrimitivePoint {
 			float position;
 			float velocity;
-			PrimitivePoint (TalonPoint point) {
-				this->position = point.position;
-				this->velocity = point.velocity;
+		};
+		struct TalonPoint {
+			cv::Point2f display_point;
+			PrimitivePoint primitive;
+			TalonPoint(float position, float velocity, cv::Point2f display_point)
+			{
+				this->display_point = display_point;
+				primitive.position = position;
+				primitive.velocity = velocity;
 			}
-
+			TalonPoint(PrimitivePoint* primitive, cv::Point2f display_point) {
+				this->display_point = display_point;
+				this->primitive = *primitive;
+			}
 		};
 
+		//A serializable non-opencv dependent version of TalonPoint
+
+		const float pi = acos(-1);
 		std::vector<TalonPoint> path_left;
 		std::vector<TalonPoint> path_right;
 		Path(tinyspline::BSpline* spline, float wheel_distance, float step);

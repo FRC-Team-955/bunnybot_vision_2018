@@ -21,20 +21,14 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		//How much change in distance do we expect?
 		float dist = sqrtf(powf(point_dr[0], 2.0) + powf(point_dr[1], 2.0)); //Distance between this point and the next
-		//float dist = cv::norm(point_dr[0] - point_dr[1]);
 
 		//Slope of the center line
 		float slope = point_dr[1] / point_dr[0];
 
 		//Create paths for each wheel
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		//auto norm = std::max(point_dr[1], point_dr[0]); 
-		//auto point_dr_inv_cv = (cv::Point2f(-point_dr[1], point_dr[0]) / fabs(norm)) * wheel_distance;
 		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
 		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		//cv::Point2f left = point_sp_cv + point_dr_inv_cv;
-		//cv::Point2f right = point_sp_cv - point_dr_inv_cv;
-		//TODO: You're trying to just use vectors to get the perpendicular extended point, so you can use vectors and calculus to get the velocity of each extended point
 
 		//Get the distance travelled by each wheel
 		float left_distance = MiscMath::PointDistance(left, left_last);
@@ -49,21 +43,29 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		left_accum += left_distance;
 		right_accum += right_distance;
 
-		float pi = acos(-1);
+		float left_velocity = left_distance;// / dist;
+		float right_velocity = right_distance;// / dist;
+
 		float change_in_slope = atan2((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1]), point_dr[0] * point_dr[0]);
-		//TODO: Better thresholding for pi
 		float reverse_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
 		float reverse_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
 
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, reverse_left * left_distance, left)); 
-		path_right.push_back(TalonPoint(right_accum, reverse_right * right_distance, right)); 
+		path_left.push_back(TalonPoint(left_accum, reverse_left * left_velocity, left)); 
+		path_right.push_back(TalonPoint(right_accum, reverse_right * right_velocity, right)); 
+		//path_left.push_back(TalonPoint(left_accum, dist / 10.0, left)); 
+		//path_right.push_back(TalonPoint(right_accum, dist / 10.0, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
 		right_last = right;
 
-		i += dist / step; //Increment over the line by step over distance
+		//Prevent lockups TODO: Make this more deterministic
+		if (dist / step > 0.0001) {
+			i += dist / step; //Increment over the line by step over distance
+		} else {
+			i += 0.001;
+		}
 	}
 }
 
@@ -84,7 +86,7 @@ void Path::render()
 
 	glVertex2f(path_left.front().display_point.x, path_left.front().display_point.y);
 	for (auto& left : this->path_left) {
-		color_by(left.velocity);
+		color_by(left.primitive.velocity);
 		glVertex2f(left.display_point.x, left.display_point.y);
 		glVertex2f(left.display_point.x, left.display_point.y);
 	}
@@ -93,7 +95,7 @@ void Path::render()
 	glVertex2f(path_right.front().display_point.x, path_right.front().display_point.y);
 	glColor3f(0.0, 1.0, 1.0);
 	for (auto& right : this->path_right) {
-		color_by(right.velocity);
+		color_by(right.primitive.velocity);
 		glVertex2f(right.display_point.x, right.display_point.y);
 		glVertex2f(right.display_point.x, right.display_point.y);
 	}
@@ -104,68 +106,66 @@ void Path::render()
 
 cv::Rect2f Path::get_size()
 {
-    cv::Rect2f rect;
-    for (auto& point : path_right) {
-        cv::Point2f position = point.display_point;
-        if (position.x < rect.x) {
-            rect.x = position.x;
-        }
-        if (position.y < rect.y) {
-            rect.y = position.y;
-        }
-        if (position.x > rect.br().x) {
-            rect.width = fabs(rect.x - position.x);
-        }
-        if (position.y > rect.br().y) {
-            rect.height = fabs(rect.y - position.y);
-        }
-    }
-    for (auto& point : path_left) {
-        cv::Point2f position = point.display_point;
-        if (position.x < rect.x) {
-            rect.x = position.x;
-        }
-        if (position.y < rect.y) {
-            rect.y = position.y;
-        }
-        if (position.x > rect.br().x) {
-            rect.width = fabs(rect.x - position.x);
-        }
-        if (position.y > rect.br().y) {
-            rect.height = fabs(rect.y - position.y);
-        }
-    }
-    return rect;
+	cv::Rect2f rect;
+	for (auto& point : path_right) {
+		cv::Point2f position = point.display_point;
+		if (position.x < rect.x) {
+			rect.x = position.x;
+		}
+		if (position.y < rect.y) {
+			rect.y = position.y;
+		}
+		if (position.x > rect.br().x) {
+			rect.width = fabs(rect.x - position.x);
+		}
+		if (position.y > rect.br().y) {
+			rect.height = fabs(rect.y - position.y);
+		}
+	}
+	for (auto& point : path_left) {
+		cv::Point2f position = point.display_point;
+		if (position.x < rect.x) {
+			rect.x = position.x;
+		}
+		if (position.y < rect.y) {
+			rect.y = position.y;
+		}
+		if (position.x > rect.br().x) {
+			rect.width = fabs(rect.x - position.x);
+		}
+		if (position.y > rect.br().y) {
+			rect.height = fabs(rect.y - position.y);
+		}
+	}
+	return rect;
 }
 
 //TODO: Use boost?
 void Path::to_socket (Socket* sock) {
 	size_t length = this->path_left.size();
 	sock->write_to(&length, sizeof(size_t));
-	for (auto& point : this->path_left) {
-		Path::PrimitivePoint point_prim = Path::PrimitivePoint(point);
-		sock->write_to(&point_prim, sizeof(Path::PrimitivePoint));
-	}
-	for (auto& point : this->path_right) {
-		Path::PrimitivePoint point_prim = Path::PrimitivePoint(point);
-		sock->write_to(&point_prim, sizeof(Path::PrimitivePoint));
-	}
+
+	for (auto& point : this->path_left)
+		sock->write_to(&point.primitive, sizeof(Path::PrimitivePoint));
+
+	for (auto& point : this->path_right)
+		sock->write_to(&point.primitive, sizeof(Path::PrimitivePoint));
 }
 
 Path::Path(Socket* sock) {
 	size_t points;
 	sock->read_to(&points, sizeof(points));
+
+	char buffer[sizeof(Path::PrimitivePoint)];
 	for (size_t i = 0; i < points; i++) {
-		char buffer[sizeof(Path::PrimitivePoint)];
 		sock->read_to(&buffer, sizeof(Path::PrimitivePoint));
-		Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
-		path_left.push_back(TalonPoint(point->position, point->velocity, cv::Point2f(0.0, 0.0)));
+		//Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
+		path_left.push_back(TalonPoint(reinterpret_cast<Path::PrimitivePoint*>(buffer), cv::Point2f(0.0, 0.0)));
 	}
 	for (size_t i = 0; i < points; i++) {
-		char buffer[sizeof(Path::PrimitivePoint)];
 		sock->read_to(&buffer, sizeof(Path::PrimitivePoint));
-		Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
-		path_right.push_back(TalonPoint(point->position, point->velocity, cv::Point2f(0.0, 0.0)));
+		path_right.push_back(TalonPoint(reinterpret_cast<Path::PrimitivePoint*>(buffer), cv::Point2f(0.0, 0.0)));
 	}
 }
 
+//TODO: Add concat function for paths

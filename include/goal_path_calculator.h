@@ -15,7 +15,7 @@ class GoalPathCalculator : public SplineRenderWrap {
 			}
 		};
 		GoalPathCalculator(float wheel_distance, float step);
-		Path calculate_path(float direction, cv::Point2f position);
+		Path calculate_path(float direction_start, cv::Point2f position_start, float direction_end, cv::Point2f position_end);
 		using SplineRenderWrap::render;
 		using SplineRenderWrap::get_size;
 

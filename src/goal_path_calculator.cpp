@@ -7,31 +7,33 @@ GoalPathCalculator::GoalPathCalculator(float wheel_distance, float step) {
 	this->ctrlp = this->spline->ctrlp();
 }
 
-Path GoalPathCalculator::calculate_path(float direction, cv::Point2f position) {
-	this->ctrlp[0] = 0.0;
-	this->ctrlp[1] = 0.0;
+Path GoalPathCalculator::calculate_path(float direction_start, cv::Point2f position_start, float direction_end, cv::Point2f position_end) {
+	this->ctrlp[0] = position_start.x;
+	this->ctrlp[1] = position_start.y;
 	this->ctrlp[2] = 0.0;
 
-	this->ctrlp[3] = 0.0;
-	this->ctrlp[4] = this->wheel_distance;
+	auto leading_a_start = MiscMath::RadialOffset(direction_start, this->wheel_distance, position_start);
+	this->ctrlp[3] = leading_a_start.x;
+	this->ctrlp[4] = leading_a_start.y;
 	this->ctrlp[5] = 0.0;
 
-	this->ctrlp[6] = 0.0;
-	this->ctrlp[7] = this->wheel_distance * 2.0;
+	auto leading_b_start = MiscMath::RadialOffset(direction_start, this->wheel_distance * 2.0, position_start);
+	this->ctrlp[6] = leading_b_start.x;
+	this->ctrlp[7] = leading_b_start.y;
 	this->ctrlp[8] = 0.0;
 
-	auto leading_a = MiscMath::RadialOffset(direction, this->wheel_distance * 2.0, position);
-	this->ctrlp[9] = leading_a.x;
-	this->ctrlp[10] = leading_a.y;
+	auto leading_a_end = MiscMath::RadialOffset(direction_end, this->wheel_distance * 2.0, position_end);
+	this->ctrlp[9] = leading_a_end.x;
+	this->ctrlp[10] = leading_a_end.y;
 	this->ctrlp[11] = 0.0;
 
-	auto leading_b = MiscMath::RadialOffset(direction, this->wheel_distance, position);
-	this->ctrlp[12] = leading_b.x;
-	this->ctrlp[13] = leading_b.y;
+	auto leading_b_end = MiscMath::RadialOffset(direction_end, this->wheel_distance, position_end);
+	this->ctrlp[12] = leading_b_end.x;
+	this->ctrlp[13] = leading_b_end.y;
 	this->ctrlp[14] = 0.0;
 
-	this->ctrlp[15] = position.x;
-	this->ctrlp[16] = position.y;
+	this->ctrlp[15] = position_end.x;
+	this->ctrlp[16] = position_end.y;
 	this->ctrlp[17] = 0.0;
 
 	spline->setCtrlp(this->ctrlp);

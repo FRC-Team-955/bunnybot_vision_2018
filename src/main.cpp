@@ -9,47 +9,50 @@
 
 typedef GoalPathCalculator GPC;
 
-//void test_graphical();
+void test_graphical();
 
 void client () {
-	SocketClient sock (5068, "localhost");
+	SocketClient sock (5069, "localhost");
 	auto path = Path(&sock);
+	for (auto& pt : path.path_left) {
+		std::cout << pt.primitive.velocity << " : " << pt.primitive.position << std::endl;
+	}
 }
 
 void server() {
 	GPC *calc = new GPC(0.5, 100.0);
 	const double pi = std::acos(-1);
-	auto path = calc->calculate_path(pi / 2.0, cv::Point2f(5.0, 5.0));
+	auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / 4.0, cv::Point2f(3.0, 5.0));
 
-	SocketServer sock(5068);
+	SocketServer sock(5069);
 	path.to_socket(&sock);
 }
 
 int main () {
+	test_graphical();
+	/*
 	std::thread server_thread (server);
 	std::thread client_thread (client);
 	server_thread.join();
 	client_thread.join();
+	*/
 }
 
-/*
-	void test_graphical () {
+void test_graphical () {
 	GPC *calc = new GPC(0.5, 100.0);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
 	const double pi = std::acos(-1);
-	calc->calculate_path(pi / 2.0, cv::Point2f(5.0, 5.0));
+	calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / 4.0, cv::Point2f(5.0, 5.0));
 	Renderer::update(true);
 
 	while (true) {
-	for (float i = 0; i < (pi * 2.0); i+= pi/256.0) {
-	auto path = calc->calculate_path(i, cv::Point2f(5.0, 5.0));
-	std::cout << "Left: " << path.path_left.size() << " Right: " << path.path_right.size() << std::endl;
-	Renderer::objects.push_back(&path);
-	Renderer::update(false);
-	Renderer::objects.pop_back();
+		for (float i = 0; i < (pi * 2.0); i+= pi/256.0) {
+			auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), i, cv::Point2f(5.0, 5.0));
+			Renderer::objects.push_back(&path);
+			Renderer::update(false);
+			Renderer::objects.pop_back();
+		}
 	}
-	}
-	}
-	*/
+}
