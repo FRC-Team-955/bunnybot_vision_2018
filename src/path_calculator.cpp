@@ -1,7 +1,6 @@
 #include <path_calculator.h>
 Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 {
-	this->step = step;
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
 	cv::Point2f left_last(0.0, 0.0);
@@ -32,12 +31,12 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		//Create paths for each wheel
 		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		auto norm = std::max(point_dr[1], point_dr[0]); 
-		auto point_dr_inv_cv = (cv::Point2f(-point_dr[1], point_dr[0]) / fabs(norm)) * wheel_distance;
-		//cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		//cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		cv::Point2f left = point_sp_cv + point_dr_inv_cv;
-		cv::Point2f right = point_sp_cv - point_dr_inv_cv;
+		//auto norm = std::max(point_dr[1], point_dr[0]); 
+		//auto point_dr_inv_cv = (cv::Point2f(-point_dr[1], point_dr[0]) / fabs(norm)) * wheel_distance;
+		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		//cv::Point2f left = point_sp_cv + point_dr_inv_cv;
+		//cv::Point2f right = point_sp_cv - point_dr_inv_cv;
 		//TODO: You're trying to just use vectors to get the perpendicular extended point, so you can use vectors and calculus to get the velocity of each extended point
 
 		//Get the distance travelled by each wheel
@@ -59,6 +58,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 
 		float pi = acos(-1);
 		float change_in_slope = atan2((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1]), point_dr[0] * point_dr[0]);
+		//TODO: Better thresholding for pi
 		float reverse_left = change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
 		float reverse_right = -change_in_slope > (pi / 2.03) ? -1.0 : 1.0;
 
@@ -72,8 +72,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		slope_last_left = slope_left;
 		slope_last_right = slope_right;
 
-		i += step / dist; //Increment over the line by step over distance
-		//i += point_dr[2] / step; //Increment over the line by step over distance
+		i += dist / step; //Increment over the line by step over distance
 	}
 }
 
@@ -147,3 +146,35 @@ cv::Rect2f Path::get_size()
     }
     return rect;
 }
+
+//TODO: Use boost?
+void Path::to_socket (Socket* sock) {
+	size_t length = this->path_left.size();
+	sock->write_to(&length, sizeof(size_t));
+	for (auto& point : this->path_left) {
+		Path::PrimitivePoint point_prim = Path::PrimitivePoint(point);
+		sock->write_to(&point_prim, sizeof(Path::PrimitivePoint));
+	}
+	for (auto& point : this->path_right) {
+		Path::PrimitivePoint point_prim = Path::PrimitivePoint(point);
+		sock->write_to(&point_prim, sizeof(Path::PrimitivePoint));
+	}
+}
+
+Path::Path(Socket* sock) {
+	size_t points;
+	sock->read_to(&points, sizeof(points));
+	for (size_t i = 0; i < points; i++) {
+		char buffer[sizeof(Path::PrimitivePoint)];
+		sock->read_to(&buffer, sizeof(Path::PrimitivePoint));
+		Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
+		path_left.push_back(TalonPoint(point->position, point->velocity, cv::Point2f(0.0, 0.0)));
+	}
+	for (size_t i = 0; i < points; i++) {
+		char buffer[sizeof(Path::PrimitivePoint)];
+		sock->read_to(&buffer, sizeof(Path::PrimitivePoint));
+		Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
+		path_right.push_back(TalonPoint(point->position, point->velocity, cv::Point2f(0.0, 0.0)));
+	}
+}
+
