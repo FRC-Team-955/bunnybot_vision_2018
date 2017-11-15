@@ -39,7 +39,7 @@ int main () {
 }
 
 void test_graphical () {
-	GPC *calc = new GPC(0.5, 100.0);
+	GPC *calc = new GPC(0.5, 1000.0);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 

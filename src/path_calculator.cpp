@@ -18,17 +18,20 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		auto point_sp = spline->evaluate(i).result();
 		auto point_dr = derive.evaluate(i).result();
 		auto point_dr_sq = derive_sq.evaluate(i).result();
+		cv::Point2f point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
+		cv::Point2f point_dr_cv = cv::Point2f(point_dr[0], point_dr[1]);
+		cv::Point2f point_dr_sq_cv = cv::Point2f(point_dr_sq[0], point_dr_sq[1]);
 
 		//How much change in distance do we expect?
-		float dist = sqrtf(powf(point_dr[0], 2.0) + powf(point_dr[1], 2.0)); //Distance between this point and the next
+		float dist = sqrtf(powf(point_dr_cv.x, 2.0) + powf(point_dr_cv.y, 2.0)); //Distance between this point and the next
 
 		//Slope of the center line
-		float slope = point_dr[1] / point_dr[0];
+		float slope = point_dr_cv.y / point_dr_cv.x;
 
 		//Create paths for each wheel
-		auto point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
-		cv::Point2f left = MiscMath::MoveAlongLine(point_dr[1] < 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
-		cv::Point2f right = MiscMath::MoveAlongLine(point_dr[1] > 0, wheel_distance, MiscMath::NegativeReciprocal(slope), point_sp_cv);
+		cv::Point2f point_norm_cv = (cv::Point2f(-point_dr_cv.y, point_dr_cv.x) / dist) * wheel_distance;
+		cv::Point2f left = point_sp_cv + point_norm_cv;
+		cv::Point2f right = point_sp_cv - point_norm_cv;
 
 		//Get the distance travelled by each wheel
 		float left_distance = MiscMath::PointDistance(left, left_last);
@@ -47,8 +50,8 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float right_velocity = right_distance;// / dist;
 
 		//Find change in angle
-		double change_in_slope = ((point_dr_sq[1]*point_dr[0]) - (point_dr_sq[0]*point_dr[1])) / powf(point_dr[0], 2.0);
-		double change_in_angle = (1.0 / (1.0 + powf(point_dr[1] / point_dr[0], 2.0))) * change_in_slope;
+		double change_in_slope = ((point_dr_sq_cv.y*point_dr_cv.x) - (point_dr_sq_cv.x*point_dr_cv.y)) / powf(point_dr_cv.x, 2.0);
+		double change_in_angle = (1.0 / (1.0 + powf(point_dr_cv.y / point_dr_cv.x, 2.0))) * change_in_slope;
 		float reverse_left = change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
