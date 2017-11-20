@@ -7,11 +7,6 @@
 #include <tinysplinecpp.h>
 #include <vector>
 #include <socket.h>
-/*
- * TODO: Make an interface class for path calculators, this one only works
- * with tank drive controls
- * TODO: Make PathCalculator inherit from Renderable
- */
 
 class Path : public Renderable {
 	public:

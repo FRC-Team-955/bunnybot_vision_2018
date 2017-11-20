@@ -3,7 +3,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 {
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
-	cv::Point2f left_last(0.0, 0.0);
+	cv::Point2f left_last(0.0, 0.0); //TODO: Set these to the origin/first instance
 	cv::Point2f right_last(0.0, 0.0);
 	float left_accum = 0.0;
 	float right_accum = 0.0;
@@ -22,32 +22,40 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		cv::Point2f point_dr_cv = cv::Point2f(point_dr[0], point_dr[1]);
 		cv::Point2f point_dr_sq_cv = cv::Point2f(point_dr_sq[0], point_dr_sq[1]);
 
-		//How much change in distance do we expect?
-		float dist = sqrtf(powf(point_dr_cv.x, 2.0) + powf(point_dr_cv.y, 2.0)); //Distance between this point and the next
+		//How much change in dist do we expect?
+		float sum_dr_squares = powf(point_dr_cv.x, 2.0) + powf(point_dr_cv.y, 2.0); //TODO: Just use multiplication here instead of powf?
+		float speed_center = sqrtf(sum_dr_squares); //Distance between this point and the next
 
 		//Slope of the center line
 		float slope = point_dr_cv.y / point_dr_cv.x;
 
 		//Create paths for each wheel
-		cv::Point2f point_norm_cv = (cv::Point2f(-point_dr_cv.y, point_dr_cv.x) / dist) * wheel_distance;
+		cv::Point2f point_norm_cv = (cv::Point2f(-point_dr_cv.y, point_dr_cv.x) / speed_center) * wheel_distance;
 		cv::Point2f left = point_sp_cv + point_norm_cv;
 		cv::Point2f right = point_sp_cv - point_norm_cv;
 
-		//Get the distance travelled by each wheel
-		float left_distance = MiscMath::PointDistance(left, left_last);
-		float right_distance = MiscMath::PointDistance(right, right_last);
+		//Get the dist travelled by each wheel
+		float left_dist = MiscMath::PointDistance(left, left_last);
+		float right_dist = MiscMath::PointDistance(right, right_last);
 
-		//Normalize distances
-		float max = std::max(left_distance, right_distance);
-		left_distance /= max;
-		right_distance /= max;
+		//Component reused alot
+		float dr_sum_dr_squares = (point_dr_sq_cv.x * point_dr_cv.x) + (point_dr_sq_cv.y * point_dr_cv.y);
 
-		//Accumulate travelled distances
-		left_accum += left_distance;
-		right_accum += right_distance;
+		//Rate of travel in center over i
+		float dr_speed_center = dr_sum_dr_squares / speed_center;
 
-		float left_velocity = left_distance;// / dist;
-		float right_velocity = right_distance;// / dist;
+		//Calculate left speed with some calculus
+		float x_dr_left = point_dr_cv.x + ((-point_dr_sq_cv.y * speed_center) + (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
+		float y_dr_left = point_dr_cv.y + ((point_dr_sq_cv.x * speed_center) - (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
+		float speed_left = sqrtf(pow(x_dr_left, 2.0) + powf(y_dr_left, 2.0));
+
+		//Calculate right speed with some more calculus
+		float x_dr_right = point_dr_cv.x + ((point_dr_sq_cv.y * speed_center) - (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
+		float y_dr_right = point_dr_cv.y + ((-point_dr_sq_cv.x * speed_center) + (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
+		float speed_right = sqrtf(pow(x_dr_right, 2.0) + powf(y_dr_right, 2.0));
+		
+		//The max of the two is the farthest distance
+		float speed_max = std::max(speed_left, speed_right);
 
 		//Find change in angle
 		double change_in_slope = ((point_dr_sq_cv.y*point_dr_cv.x) - (point_dr_sq_cv.x*point_dr_cv.y)) / powf(point_dr_cv.x, 2.0);
@@ -55,21 +63,28 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float reverse_left = change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
+		//Accumulate distances
+		left_accum += speed_left / (step * 10.0); //MAGIC NUMBERS
+		right_accum += speed_right / (step * 10.0);
+		//left_accum += left_dist;
+		//right_accum += right_dist;
+		
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, reverse_left * left_velocity, left)); 
-		path_right.push_back(TalonPoint(right_accum, reverse_right * right_velocity, right)); 
+		path_left.push_back(TalonPoint(left_accum, speed_left * reverse_left, left)); 
+		path_right.push_back(TalonPoint(right_accum, speed_right * reverse_right, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
 		right_last = right;
 
 		//Prevent lockups TODO: Make this more deterministic
-		if (dist / step > 0.0001) {
-			i += dist / step; //Increment over the line by step over distance
-		} else {
-			i += 0.001;
-		}
+		//if (speed_min / step > 0.0001) {
+			i += (1.0 / (speed_max * step)); //Increment over the line by step over dist
+		//} else {
+		//	i += 0.001;
+		//}
 	}
+	std::cout << left_accum << " : " << right_accum << std::endl;
 }
 
 void Path::color_by(float input) { //Green to black to red from 1.0 to 0.0 to -1.0 respectively
@@ -162,7 +177,6 @@ Path::Path(Socket* sock) {
 	char buffer[sizeof(Path::PrimitivePoint)];
 	for (size_t i = 0; i < points; i++) {
 		sock->read_to(&buffer, sizeof(Path::PrimitivePoint));
-		//Path::PrimitivePoint* point = reinterpret_cast<Path::PrimitivePoint*>(buffer);
 		path_left.push_back(TalonPoint(reinterpret_cast<Path::PrimitivePoint*>(buffer), cv::Point2f(0.0, 0.0)));
 	}
 	for (size_t i = 0; i < points; i++) {

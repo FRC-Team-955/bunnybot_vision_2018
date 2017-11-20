@@ -3,7 +3,6 @@
 #include <path_calculator.h>
 #include <opencv2/opencv.hpp>
 #include <cstring>
-#include <thread>
 #include <socket.h>
 #include <vector>
 
@@ -11,6 +10,7 @@ typedef GoalPathCalculator GPC;
 
 void test_graphical();
 
+/*
 void client () {
 	SocketClient sock (5069, "localhost");
 	auto path = Path(&sock);
@@ -27,6 +27,7 @@ void server() {
 	SocketServer sock(5069);
 	path.to_socket(&sock);
 }
+*/
 
 int main () {
 	test_graphical();
@@ -39,17 +40,17 @@ int main () {
 }
 
 void test_graphical () {
-	GPC *calc = new GPC(0.5, 1000.0);
+	GPC *calc = new GPC(0.5, 10.0);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
 	const double pi = std::acos(-1);
-	calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / 4.0, cv::Point2f(3.0, 5.0));
+	calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / 4.0, cv::Point2f(5.0, 5.0));
 	Renderer::update(true);
 
 	while (true) {
-		for (float i = 0; i < (pi * 2.0); i+= pi/256.0) {
-			auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), i, cv::Point2f(3.0, 5.0));
+		for (float i = 0; i < (pi * 2.0); i+= pi/512.0) {
+			auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / -2.0, cv::Point2f(5.0, 5.0));
 			Renderer::objects.push_back(&path);
 			Renderer::update(false);
 			Renderer::objects.pop_back();
