@@ -4,4 +4,8 @@ debug
 vimsession.vim
 watch-build.sh
 *.aux
+*.lof
 *.log
+*.lot
+*.out
+*.toc

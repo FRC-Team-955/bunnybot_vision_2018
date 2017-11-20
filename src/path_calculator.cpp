@@ -8,10 +8,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 	float left_accum = 0.0;
 	float right_accum = 0.0;
 
-	//DIRTY HACK for inflection points
-	bool inflect_left = true;
-	bool inflect_right = true;
-
 	float i = 0.0;
 	while (i < 1.0) {
 		//Calculate spline evaluations
@@ -45,13 +41,13 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float dr_speed_center = dr_sum_dr_squares / speed_center;
 
 		//Calculate left speed with some calculus
-		float x_dr_left = point_dr_cv.x + ((-point_dr_sq_cv.y * speed_center) + (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
-		float y_dr_left = point_dr_cv.y + ((point_dr_sq_cv.x * speed_center) - (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
+		float x_dr_left = point_dr_cv.x + wheel_distance * ((-point_dr_sq_cv.y * speed_center) + (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
+		float y_dr_left = point_dr_cv.y + wheel_distance * ((point_dr_sq_cv.x * speed_center) - (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
 		float speed_left = sqrtf(pow(x_dr_left, 2.0) + powf(y_dr_left, 2.0));
 
 		//Calculate right speed with some more calculus
-		float x_dr_right = point_dr_cv.x + ((point_dr_sq_cv.y * speed_center) - (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
-		float y_dr_right = point_dr_cv.y + ((-point_dr_sq_cv.x * speed_center) + (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
+		float x_dr_right = point_dr_cv.x + wheel_distance * ((point_dr_sq_cv.y * speed_center) - (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
+		float y_dr_right = point_dr_cv.y + wheel_distance * ((-point_dr_sq_cv.x * speed_center) + (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
 		float speed_right = sqrtf(pow(x_dr_right, 2.0) + powf(y_dr_right, 2.0));
 		
 		//The max of the two is the farthest distance
@@ -64,25 +60,18 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
 		//Accumulate distances
-		left_accum += speed_left / (step * 10.0); //MAGIC NUMBERS
-		right_accum += speed_right / (step * 10.0);
-		//left_accum += left_dist;
-		//right_accum += right_dist;
-		
+		left_accum += (speed_left / speed_max) / step;
+		right_accum += (speed_right / speed_max) / step;
+
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, speed_left * reverse_left, left)); 
-		path_right.push_back(TalonPoint(right_accum, speed_right * reverse_right, right)); 
+		path_left.push_back(TalonPoint(left_accum, (speed_left / speed_max) * reverse_left, left)); 
+		path_right.push_back(TalonPoint(right_accum, (speed_right / speed_max) * reverse_right, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
 		right_last = right;
 
-		//Prevent lockups TODO: Make this more deterministic
-		//if (speed_min / step > 0.0001) {
-			i += (1.0 / (speed_max * step)); //Increment over the line by step over dist
-		//} else {
-		//	i += 0.001;
-		//}
+		i += 1.0 / (speed_max * step); //Increment over the line by step over dist
 	}
 	std::cout << left_accum << " : " << right_accum << std::endl;
 }
