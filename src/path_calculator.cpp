@@ -59,7 +59,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float reverse_left = change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
-		//Accumulate distances
+		//Accumulate distances, assuming the longest side always goes one distance unit
 		left_accum += (speed_left / speed_max) / step;
 		right_accum += (speed_right / speed_max) / step;
 
@@ -71,9 +71,9 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		left_last = left;
 		right_last = right;
 
-		i += 1.0 / (speed_max * step); //Increment over the line by step over dist
+		i += 1.0 / (speed_max * step); //Increment over the line by one <step> unit distances, assuming the relation between distance travelled over i this unit is equal to the next (accuracy improves with resolution)
 	}
-	std::cout << left_accum << " : " << right_accum << std::endl;
+	//std::cout << left_accum << " : " << right_accum << std::endl;
 }
 
 void Path::color_by(float input) { //Green to black to red from 1.0 to 0.0 to -1.0 respectively

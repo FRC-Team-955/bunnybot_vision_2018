@@ -48,13 +48,13 @@ Note: The order of these points is reversed for the \textit{end} of the spline
 \textbf{TODO: Include picture, have directory for example screenshot codes}
 
 \section{Finding the positions of each wheel}
-Offset of each wheel from a point along the curve (given by $x(i)$ and $y(i)$ where $i\in(0,1)$) with distance d can be given by the equation below: \\
+Offset of each wheel from a point along the curve (given by $x(i)$ and $y(i)$ where $i\in(0,1)$) with distance d can be given by the expression below: \\
 \begin{equation}
 	(x(i), y(i)) \pm d \left(\frac{(-y'(i), x'(i))}{\sqrt{x'(i)+y'(i)}}\right)
 \end{equation}
 
 \section{Finding the velocities of each wheel}
-To find the velocity of each wheel, we can simply derive the position of each like so:
+To find the velocity of each wheel, we can derive the position of each like so:
 \begin{equation}
 	(x'(i), y'(i)) \pm d\frac{(-y''(i), x''(i))*\sqrt{x'(i)^2+y'(i)^2} - (-y'(i), x(i)) * \frac{y''(i)y'(i) + x''(i)x'(i)}{\sqrt{x'(i)^2+y'(i)^2}}}{x'(i)+y'(i)}
 \end{equation}
