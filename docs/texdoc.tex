@@ -1,14 +1,14 @@
 \documentclass[12pt, english]{article}
 \usepackage{mathtools}
 \usepackage{amssymb}
+\usepackage{gensymb}
 
 \usepackage{listings}
 \usepackage{xcolor}
-
 \lstset { %
-    language=C++,
-    backgroundcolor=\color{black!5}, % set backgroundcolor
-    basicstyle=\footnotesize,% basic font setting
+	language=C++,
+	 backgroundcolor=\color{black!5}, % set backgroundcolor
+	 basicstyle=\footnotesize,% basic font setting
 }
 
 \date{}
@@ -19,7 +19,6 @@
 }
 
 \maketitle
-
 \noindent
 	\bgroup\obeylines
 	Q: Why do you even want to use splines anyway?
@@ -30,33 +29,75 @@
 \newpage
 
 \section{Introduction/Why}
-But seriously, we use splines because they give us an optimal path to a target without having to waste time stopping and turning. We turn \textit{while} we move. This is important because it saves time during the autonomous period in FRC, as well as giving us more margin in teleop (when we wish to use autonomous functions during teleop). This document details how we accomplish this, mainly how all of the math that goes into it works.
+But seriously, we use splines because they give us an optimal path to a target without having to waste time stopping and turning. We turn \textit{while} we move. This is important because it saves time during the autonomous period in FRC, as well as giving us more margin in teleop (when we wish to use autonomous functions during teleop). This document details how we accomplish this.
 
 \section{Libraries used}
 Tiny spline is a library for calculating an n-dimensional paramatric function (spline) given a number of control points. Details about their software are available at https://tinyspline.org/ . We also use an open source computer vision library called OpenCV to find our goal, available at https://opencv.org
 
-\section{Control Points}
+\section{Setting up the spline}
+\subsection{Background}
+TinySpline expects a set of control points to influence the shape and trajectory of the spline it creates. When the vision code detects the goal, it should return both it's relative position and it's orientation. The bot's position is always at the origin $(0,0)$, while the goal is at some offset.
+
+\subsection{Control Points}
 \textbf{File: ../src/goal\_path\_calculator.cpp} \\
-Because our goals have both a position and a direction, we use a combination of 3 control points for each goal. The first control point, located exactly at our goal's location, determines where we want to end up. The second, located at an offset and from our goal's position based off of the goal's orientation, makes sure that the robot ends oriented at our goal. The third, located at \textit{double} the offset distance from the goal's position, makes sure that we have a margin to finish turning at our desired location. If the location of the goal is $(x, y)$, the direction of the goal $\theta$ (In radians), and the distance we want to move out from the goal $d$ (usually the distance between the wheels of the bot), then the locations of the 3 goals are as follows (in order): \\
+Because our goals have both a position and a direction, we use a combination of 3 control points for each goal. The first control point, located exactly at our goal's location, determines where we want to end up. The second, located at an offset and from our goal's position based off of the goal's orientation, makes sure that the robot ends oriented at our goal. The third, located at \textit{double} the offset distance from the goal's position, makes sure that we have a margin to finish turning at our desired location. If the location of the goal is $(x, y)$, the direction of the goal $\theta$ (In radians), and the distance we want to move out from the goal $d$ (usually the distance between the wheels of the bot), then the locations of the 3 control points necessary are as follows (in order): \\
 \\
 $(x, y)$ \\
 $(\cos{\theta} * d, \sin{\theta} * d) + (x, y)$ \\
 $(\cos{\theta} * d * 2, \sin{\theta} * d * 2) + (x, y)$ \\
 \\
-Note: The order of these points is reversed for the \textit{end} of the spline
+Note: The order of these points is reversed for the \textit{end} control points of the spline
 
-\textbf{TODO: Include picture, have directory for example screenshot codes}
+\section{Generating paths}
+\subsection{Wheel positions}
+To find the position of wheel at index $i$ of a spline, we first need to find the direction of the current point, given by $(x'(i), y'(i))$. We can then find the perpendicular to tangent by rotating it by 90\degree: \\
 
-\section{Finding the positions of each wheel}
-Offset of each wheel from a point along the curve (given by $x(i)$ and $y(i)$ where $i\in(0,1)$) with distance d can be given by the expression below: \\
+\begin{equation}
+	\begin{bmatrix}
+		0 & -1 \\
+		1 & 0 \\
+	\end{bmatrix}
+	\begin{bmatrix}
+		x'(i)\\
+		y'(i)\\
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+		-y'(i)\\
+		x'(i)\\
+	\end{bmatrix}
+	= (-y'(i), x'(i)) 
+\end{equation}
+
+\noindent
+We then normalize the point by dividing it by the length of the original vector: \\
+\begin{equation}
+	\label{deriv_speed_vec}
+	\frac{(-y'(i), x'(i))}{\sqrt{x'(i)+y'(i)}}
+\end{equation}
+
+\noindent
+Adding the vector to the position along the curve gives us the final position of the wheel:
 \begin{equation}
 	(x(i), y(i)) \pm d \left(\frac{(-y'(i), x'(i))}{\sqrt{x'(i)+y'(i)}}\right)
 \end{equation}
 
-\section{Finding the velocities of each wheel}
+\noindent
+Note: Either subtracting or adding the vector from the position gives us two distict posibilities: These are the left and right wheels, respectively.
+
+\subsection{Wheel velocities}
 To find the velocity of each wheel, we can derive the position of each like so:
 \begin{equation}
-	(x'(i), y'(i)) \pm d\frac{(-y''(i), x''(i))*\sqrt{x'(i)^2+y'(i)^2} - (-y'(i), x(i)) * \frac{y''(i)y'(i) + x''(i)x'(i)}{\sqrt{x'(i)^2+y'(i)^2}}}{x'(i)+y'(i)}
+	(x'(i), y'(i)) \pm d\frac{(-y''(i), x''(i))*\sqrt{x'(i)^2+y'(i)^2} - (-y'(i), x'(i)) * \frac{y''(i)y'(i) + x''(i)x'(i)}{\sqrt{x'(i)^2+y'(i)^2}}}{x'(i)+y'(i)}
 \end{equation}
+
+\subsection{Wheel accumulative totals}
+The TalonSRX model that the team uses expects position, velocity, and $\Delta$time. $\Delta$Time must be fixed, and cannot change from one sample to the next. One way to do this while simultaniously ensuring that the path is optimal (I. E. one motor is always running at 100\% capacity) is to base the increment along the spline off of the velocity of the sides. We increment over the spline by the speed of the fastest side (left or right) multiplied by our max velocity. So our increment always ends with the distance travelled equaling the max velocity multiplied by the time limit, AKA the maximum distance one wheel can travel in the time unit.
+
+\section{Special Thanks}
+\begin{enumerate}
+	\item Andrew Jones and Grace Carroll, for helping me with deriving the length of the speed vector in equation \ref{deriv_speed_vec}
+	\item James Buchanan, for helping me find the derivative of the inverse tangent in TBD and for putting up with my pesky questions.
+\end{enumerate}
 
 \end{document}

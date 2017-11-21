@@ -26,7 +26,9 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float slope = point_dr_cv.y / point_dr_cv.x;
 
 		//Create paths for each wheel
-		cv::Point2f point_norm_cv = (cv::Point2f(-point_dr_cv.y, point_dr_cv.x) / speed_center) * wheel_distance;
+		cv::Point2f point_norm_raw_cv = cv::Point2f(-point_dr_cv.y, point_dr_cv.x);
+		cv::Point2f point_norm_raw_sq_cv = cv::Point2f(-point_dr_sq_cv.y, point_dr_sq_cv.x);
+		cv::Point2f point_norm_cv = (point_norm_raw_cv / speed_center) * wheel_distance;
 		cv::Point2f left = point_sp_cv + point_norm_cv;
 		cv::Point2f right = point_sp_cv - point_norm_cv;
 
@@ -34,21 +36,19 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float left_dist = MiscMath::PointDistance(left, left_last);
 		float right_dist = MiscMath::PointDistance(right, right_last);
 
-		//Component reused alot
-		float dr_sum_dr_squares = (point_dr_sq_cv.x * point_dr_cv.x) + (point_dr_sq_cv.y * point_dr_cv.y);
-
 		//Rate of travel in center over i
-		float dr_speed_center = dr_sum_dr_squares / speed_center;
+		float dr_speed_center = (point_dr_sq_cv.x * point_dr_cv.x) + (point_dr_sq_cv.y * point_dr_cv.y) / speed_center;
+
+		//How much should we move the derivative from the original
+		cv::Point2f dr_offset_speed = (wheel_distance * ((point_norm_raw_sq_cv * speed_center) - (point_norm_raw_cv * dr_speed_center)) / sum_dr_squares);
 
 		//Calculate left speed with some calculus
-		float x_dr_left = point_dr_cv.x + wheel_distance * ((-point_dr_sq_cv.y * speed_center) + (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
-		float y_dr_left = point_dr_cv.y + wheel_distance * ((point_dr_sq_cv.x * speed_center) - (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
-		float speed_left = sqrtf(pow(x_dr_left, 2.0) + powf(y_dr_left, 2.0));
+		cv::Point2f dr_left = point_dr_cv + dr_offset_speed; 
+		float speed_left = sqrtf(powf(dr_left.x, 2.0) + powf(dr_left.y, 2.0));
 
 		//Calculate right speed with some more calculus
-		float x_dr_right = point_dr_cv.x + wheel_distance * ((point_dr_sq_cv.y * speed_center) - (point_dr_cv.y * dr_speed_center)) / sum_dr_squares;
-		float y_dr_right = point_dr_cv.y + wheel_distance * ((-point_dr_sq_cv.x * speed_center) + (point_dr_cv.x * dr_speed_center)) / sum_dr_squares;
-		float speed_right = sqrtf(pow(x_dr_right, 2.0) + powf(y_dr_right, 2.0));
+		cv::Point2f dr_right = point_dr_cv - dr_offset_speed;
+		float speed_right = sqrtf(powf(dr_right.x, 2.0) + powf(dr_right.y, 2.0));
 		
 		//The max of the two is the farthest distance
 		float speed_max = std::max(speed_left, speed_right);
