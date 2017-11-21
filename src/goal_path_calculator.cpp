@@ -1,7 +1,8 @@
 #include <goal_path_calculator.h>
 
-GoalPathCalculator::GoalPathCalculator(float wheel_distance, float step) {
-	this->step = step;
+GoalPathCalculator::GoalPathCalculator(float wheel_distance, float max_allowed_velocity, float max_time_step) {
+	this->max_allowed_velocity = max_allowed_velocity;
+	this->max_time_step = max_time_step;
 	this->wheel_distance = wheel_distance;
 	this->spline = new tinyspline::BSpline(6, 3, 3); //Three dimensions, so we can display it later using native OpenGL functions
 	this->ctrlp = this->spline->ctrlp();
@@ -37,5 +38,5 @@ Path GoalPathCalculator::calculate_path(float direction_start, cv::Point2f posit
 	this->ctrlp[17] = 0.0;
 
 	spline->setCtrlp(this->ctrlp);
-	return Path(this->spline, this->wheel_distance, this->step);
+	return Path(this->spline, this->wheel_distance, this->max_allowed_velocity, this->max_time_step);
 }

@@ -1,5 +1,5 @@
 #include <path_calculator.h>
-Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity)
+Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity, float max_change_time)
 {
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
@@ -60,20 +60,20 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
 		//Accumulate distances, assuming the longest side always goes one distance unit
-		left_accum += (speed_left / speed_max) / max_allowed_velocity;
-		right_accum += (speed_right / speed_max) / max_allowed_velocity;
+		left_accum += (speed_left / speed_max) * max_allowed_velocity * max_change_time;
+		right_accum += (speed_right / speed_max) * max_allowed_velocity * max_change_time;
 
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, (speed_left / speed_max) * reverse_left, left)); 
-		path_right.push_back(TalonPoint(right_accum, (speed_right / speed_max) * reverse_right, right)); 
+		path_left.push_back(TalonPoint(left_accum, max_allowed_velocity * (speed_left / speed_max) * reverse_left, left)); 
+		path_right.push_back(TalonPoint(right_accum, max_allowed_velocity * (speed_right / speed_max) * reverse_right, right)); 
 
 		//Copy over positions and slope for next iteration
 		left_last = left;
 		right_last = right;
 
-		i += 1.0 / (speed_max * max_allowed_velocity); //Increment over the line by one <max_allowed_velocity> unit distances, assuming the relation between distance travelled over i this unit is equal to the next (accuracy improves with resolution)
+		i += (1.0 / speed_max) * max_allowed_velocity * max_change_time;
 	}
-	//std::cout << left_accum << " : " << right_accum << std::endl;
+	std::cout << left_accum << " : " << right_accum << std::endl;
 }
 
 void Path::color_by(float input) { //Green to black to red from 1.0 to 0.0 to -1.0 respectively
