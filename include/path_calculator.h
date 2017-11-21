@@ -30,11 +30,10 @@ class Path : public Renderable {
 		};
 
 		//A serializable non-opencv dependent version of TalonPoint
-
 		const float pi = acos(-1);
 		std::vector<TalonPoint> path_left;
 		std::vector<TalonPoint> path_right;
-		Path(tinyspline::BSpline* spline, float wheel_distance, float step);
+		Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity);
 		Path(Socket* sock);
 		void render();
 		cv::Rect2f get_size();

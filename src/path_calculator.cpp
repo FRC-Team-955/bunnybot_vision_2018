@@ -1,5 +1,5 @@
 #include <path_calculator.h>
-Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
+Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity)
 {
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
@@ -60,8 +60,8 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		float reverse_right = -change_in_angle > pi * 2.0 ? -1.0 : 1.0;
 
 		//Accumulate distances, assuming the longest side always goes one distance unit
-		left_accum += (speed_left / speed_max) / step;
-		right_accum += (speed_right / speed_max) / step;
+		left_accum += (speed_left / speed_max) / max_allowed_velocity;
+		right_accum += (speed_right / speed_max) / max_allowed_velocity;
 
 		//Add path elements
 		path_left.push_back(TalonPoint(left_accum, (speed_left / speed_max) * reverse_left, left)); 
@@ -71,7 +71,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float step)
 		left_last = left;
 		right_last = right;
 
-		i += 1.0 / (speed_max * step); //Increment over the line by one <step> unit distances, assuming the relation between distance travelled over i this unit is equal to the next (accuracy improves with resolution)
+		i += 1.0 / (speed_max * max_allowed_velocity); //Increment over the line by one <max_allowed_velocity> unit distances, assuming the relation between distance travelled over i this unit is equal to the next (accuracy improves with resolution)
 	}
 	//std::cout << left_accum << " : " << right_accum << std::endl;
 }

@@ -49,8 +49,16 @@ $(\cos{\theta} * d * 2, \sin{\theta} * d * 2) + (x, y)$ \\
 Note: The order of these points is reversed for the \textit{end} control points of the spline
 
 \section{Generating paths}
+\subsection{Some notes about the notation}
+TinySpline allows us access to indexed positions in n dimensions, the first two of which are $x(j)$ and $y(j)$. Note that $j$ does not represent a real distance in space, but an arbitrary index over the spline as a whole. 
+
+When we express $y'(j)$, or $x'(j)$, we have to keep in mind that what these really are are real distances over a distance in index $j$ where $j \in (0,1)$. Formally, these are:
+\begin{equation}
+	y'(j) = \frac{dy}{di} y(j) \text{  and  } x'(j) = \frac{dx}{di} x(j) 
+\end{equation}
+
 \subsection{Wheel positions}
-To find the position of wheel at index $i$ of a spline, we first need to find the direction of the current point, given by $(x'(i), y'(i))$. We can then find the perpendicular to tangent by rotating it by 90\degree: \\
+To find the position of wheel at index $j$ of a spline, we first need to find the direction of the current point, given by $(x'(j), y'(j))$. We can then find the perpendicular to tangent by rotating it by 90\degree: \\
 
 \begin{equation}
 	\begin{bmatrix}
@@ -58,28 +66,28 @@ To find the position of wheel at index $i$ of a spline, we first need to find th
 		1 & 0 \\
 	\end{bmatrix}
 	\begin{bmatrix}
-		x'(i)\\
-		y'(i)\\
+		x'(j)\\
+		y'(j)\\
 	\end{bmatrix}
 	=
 	\begin{bmatrix}
-		-y'(i)\\
-		x'(i)\\
+		-y'(j)\\
+		x'(j)\\
 	\end{bmatrix}
-	= (-y'(i), x'(i)) 
+	= (-y'(j), x'(j)) 
 \end{equation}
 
 \noindent
 We then normalize the point by dividing it by the length of the original vector: \\
 \begin{equation}
 	\label{deriv_speed_vec}
-	\frac{(-y'(i), x'(i))}{\sqrt{x'(i)+y'(i)}}
+	\frac{(-y'(j), x'(j))}{\sqrt{x'(j)+y'(j)}}
 \end{equation}
 
 \noindent
 Adding the vector to the position along the curve gives us the final position of the wheel:
 \begin{equation}
-	(x(i), y(i)) \pm d \left(\frac{(-y'(i), x'(i))}{\sqrt{x'(i)+y'(i)}}\right)
+	(x(j), y(j)) \pm d \left(\frac{(-y'(j), x'(j))}{\sqrt{x'(j)+y'(j)}}\right)
 \end{equation}
 
 \noindent
@@ -88,16 +96,29 @@ Note: Either subtracting or adding the vector from the position gives us two dis
 \subsection{Wheel velocities}
 To find the velocity of each wheel, we can derive the position of each like so:
 \begin{equation}
-	(x'(i), y'(i)) \pm d\frac{(-y''(i), x''(i))*\sqrt{x'(i)^2+y'(i)^2} - (-y'(i), x'(i)) * \frac{y''(i)y'(i) + x''(i)x'(i)}{\sqrt{x'(i)^2+y'(i)^2}}}{x'(i)+y'(i)}
+	(x'(j), y'(j)) \pm d\frac{(-y''(j), x''(j))*\sqrt{x'(j)^2+y'(j)^2} - (-y'(j), x'(j)) * \frac{y''(j)y'(j) + x''(j)x'(j)}{\sqrt{x'(j)^2+y'(j)^2}}}{x'(j)+y'(j)}
 \end{equation}
 
-\subsection{Wheel accumulative totals}
+\subsection{Reversing}
+Because the rate of change in velocity must be positive for each motor, we have no intrinsic way of knowing if a given wheel should be in reverse to compensate for a tight corner. Luckily, there is a solution; we can find the rate of change in angle of center line, and measure if it's above/below $2\pi$. This works because if the rate of change is above $2\pi$ we're making a turn sharper than if one motor was at 100\% and the other at 0\%. We can find the derivate of the change in angle like so:
+\begin{equation}
+	\label{change_in_angle}
+	\frac{d}{di} 
+	\tan^{-1}{\left(\frac{y'(j)}{x'(j)}\right)} = 
+	\frac{1}{1 + \left(\frac{y'(j)}{x'(j)}\right)} * \frac{y''(j)x'(j) - x''(j)y'(j)}{x'(j)^2}
+\end{equation}
+
+
+\subsection{Wheel distance accumulation and incrementing}
 The TalonSRX model that the team uses expects position, velocity, and $\Delta$time. $\Delta$Time must be fixed, and cannot change from one sample to the next. One way to do this while simultaniously ensuring that the path is optimal (I. E. one motor is always running at 100\% capacity) is to base the increment along the spline off of the velocity of the sides. We increment over the spline by the speed of the fastest side (left or right) multiplied by our max velocity. So our increment always ends with the distance travelled equaling the max velocity multiplied by the time limit, AKA the maximum distance one wheel can travel in the time unit.
+\begin{equation}
+	\frac{di}{d(\text{time})} = \frac{1}{\frac{\text{max velocity} * \text{max d/t}}{di}}
+\end{equation}
 
 \section{Special Thanks}
 \begin{enumerate}
 	\item Andrew Jones and Grace Carroll, for helping me with deriving the length of the speed vector in equation \ref{deriv_speed_vec}
-	\item James Buchanan, for helping me find the derivative of the inverse tangent in TBD and for putting up with my pesky questions.
+	\item James Buchanan, for helping me find the derivative of the inverse tangent in equation \ref{change_in_angle} and for putting up with my pesky questions.
 \end{enumerate}
 
 \end{document}
