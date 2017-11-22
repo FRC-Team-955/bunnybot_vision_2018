@@ -40,7 +40,7 @@ int main () {
 }
 
 void test_graphical () {
-	GPC *calc = new GPC(0.5, 1.0, 1.0/1000.0); //Wheel distance, max velocity, time step
+	GPC *calc = new GPC(0.5, 1.0, 1.0/10.0); //Wheel distance, max velocity, time step
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 

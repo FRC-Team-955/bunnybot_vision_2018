@@ -3,8 +3,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_t
 {
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
-	cv::Point2f left_last(0.0, 0.0); //TODO: Set these to the origin/first instance
-	cv::Point2f right_last(0.0, 0.0);
 	float left_accum = 0.0;
 	float right_accum = 0.0;
 
@@ -32,10 +30,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_t
 		cv::Point2f point_norm_cv = (point_norm_raw_cv / speed_center) * wheel_distance;
 		cv::Point2f left = point_sp_cv + point_norm_cv;
 		cv::Point2f right = point_sp_cv - point_norm_cv;
-
-		//Get the dist travelled by each wheel
-		float left_dist = MiscMath::PointDistance(left, left_last);
-		float right_dist = MiscMath::PointDistance(right, right_last);
 
 		//Rate of travel in center over i
 		float dr_speed_center = (point_dr_sq_cv.x * point_dr_cv.x) + (point_dr_sq_cv.y * point_dr_cv.y) / speed_center;
@@ -67,10 +61,6 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_t
 		//Add path elements
 		path_left.push_back(TalonPoint(left_accum, max_allowed_velocity * (speed_left / speed_max) * reverse_left, left)); 
 		path_right.push_back(TalonPoint(right_accum, max_allowed_velocity * (speed_right / speed_max) * reverse_right, right)); 
-
-		//Copy over positions and slope for next iteration
-		left_last = left;
-		right_last = right;
 
 		i += (1.0 / speed_max) * max_allowed_velocity * max_change_time;
 	}
