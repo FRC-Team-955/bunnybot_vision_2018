@@ -33,7 +33,7 @@ class Path : public Renderable {
 		const float pi = acos(-1);
 		std::vector<TalonPoint> path_left;
 		std::vector<TalonPoint> path_right;
-		Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity, float max_change_time);
+		Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_time);
 		Path(Socket* sock);
 		void render();
 		cv::Rect2f get_size();

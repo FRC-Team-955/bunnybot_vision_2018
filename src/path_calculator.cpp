@@ -1,5 +1,5 @@
 #include <path_calculator.h>
-Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_velocity, float max_change_time)
+Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_time)
 {
 	auto derive = spline->derive();
 	auto derive_sq = derive.derive();
@@ -12,6 +12,7 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_allowed_
 	while (i < 1.0) {
 		//Calculate spline evaluations
 		auto point_sp = spline->evaluate(i).result();
+		float max_allowed_velocity = point_sp[2];
 		auto point_dr = derive.evaluate(i).result();
 		auto point_dr_sq = derive_sq.evaluate(i).result();
 		cv::Point2f point_sp_cv = cv::Point2f(point_sp[0], point_sp[1]);
