@@ -20,7 +20,7 @@ class GoalPathCalculator : public SplineRenderWrap {
 		using SplineRenderWrap::get_size;
 
 	private:
-		float max_allowed_velocity; //The maxallowed_velocity 
+		float max_allowed_velocity; //The max allowed velocity 
 		float max_time_step; //How much time does each point last for?
 		float wheel_distance; //Wheel distance from the center of the robot
 		std::vector<tinyspline::real> ctrlp;

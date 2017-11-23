@@ -20,22 +20,15 @@ include_directories(${OPENGL_INCLUDE_DIRS})
 link_directories(${OPENGL_LIBRARY_DIRS})
 add_definitions(${OPENGL_DEFINITIONS})
 
-# Find pugixml
-find_path (PUGIXML_INCLUDE_DIR NAMES pugixml.hpp PATHS ${PUGIXML_HOME}/include)
-find_library (PUGIXML_LIBRARY NAMES pugixml PATHS ${PUGIXML_HOME}/lib)
-
 # Manually the librealsense libraries and headers
 FILE(GLOB Realsense_LIBS "/usr/local/lib/librealsense.so")
 INCLUDE_DIRECTORIES("/usr/local/include/librealsense/")
 FILE(GLOB TinySpline_LIBS "/usr/local/lib/libtinysplinecpp.so")
 INCLUDE_DIRECTORIES("/usr/local/include/tinysplinecpp.h")
 
-# Include the include directory for the project
-INCLUDE_DIRECTORIES(include ${PUGIXML_INCLUDE_DIR}/pugixml.hpp)
-MESSAGE(STATUS "Pugixml include dir: " ${PUGIXML_INCLUDE_DIR})
-
 # Compile source files
 FILE(GLOB SOURCES "src/*.cpp")
+INCLUDE_DIRECTORIES("./include")
 
 # Use c++11 and clang
 SET (CMAKE_CXX_COMPILER "/usr/bin/clang++")
@@ -45,4 +38,4 @@ SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 ADD_EXECUTABLE(Vision ${SOURCES})
 
 # Link libraries into the executable
-TARGET_LINK_LIBRARIES(Vision ${OpenCV_LIBS} ${Realsense_LIBS} ${PUGIXML_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TinySpline_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
+TARGET_LINK_LIBRARIES(Vision ${OpenCV_LIBS} ${Realsense_LIBS} ${CMAKE_THREAD_LIBS_INIT} ${TinySpline_LIBS} ${OPENGL_LIBRARIES} ${GLUT_LIBRARIES})
