@@ -4,43 +4,35 @@
 #include <opencv2/opencv.hpp>
 #include <cstring>
 #include <socket.h>
+#include <mutex>
 #include <vector>
+#include <chrono>
+#include <thread>
 
 typedef GoalPathCalculator GPC;
 
 void test_graphical();
 
-/*
-void client () {
-	SocketClient sock (5069, "localhost");
-	auto path = Path(&sock);
-	for (auto& pt : path.path_left) {
-		std::cout << pt.primitive.velocity << " : " << pt.primitive.position << std::endl;
+Path* latest_path = nullptr;
+std::mutex latest_path_mutex;
+
+void server() {
+	SocketServer sock(5069);
+	while (1) {
+		latest_path_mutex.lock();
+		if (latest_path) {
+			latest_path->to_socket(&sock);
+			latest_path_mutex.unlock();
+		} else {
+			latest_path_mutex.unlock();
+		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
 	}
 }
 
-void server() {
-	GPC *calc = new GPC(0.5, 1000.0);
-	const double pi = std::acos(-1);
-	auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), pi / 4.0, cv::Point2f(3.0, 5.0));
-
-	SocketServer sock(5069);
-	path.to_socket(&sock);
-}
-*/
-
 int main () {
-	test_graphical();
-	/*
-	std::thread server_thread (server);
-	std::thread client_thread (client);
-	server_thread.join();
-	client_thread.join();
-	*/
-}
-
-void test_graphical () {
 	GPC *calc = new GPC(0.5, 1.0, 1.0/100.0); //Wheel distance, max velocity, time step
+	std::thread server_thread (server);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
@@ -50,10 +42,15 @@ void test_graphical () {
 
 	while (true) {
 		for (float i = 0; i < (pi * 2.0); i+= pi/256.0) {
-			auto path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), i, cv::Point2f(3.0, 3.0));
-			Renderer::objects.push_back(&path);
+			Path* path = calc->calculate_path(pi / 2.0, cv::Point2f(0.0, 0.0), i, cv::Point2f(3.0, 3.0));
+			Renderer::objects.push_back(path);
 			Renderer::update(false);
 			Renderer::objects.pop_back();
+			latest_path_mutex.lock();
+			latest_path = path;
+			latest_path_mutex.unlock();
+			delete path;
 		}
 	}
+	server_thread.join();
 }

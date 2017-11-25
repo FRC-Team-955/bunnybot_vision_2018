@@ -8,7 +8,7 @@ GoalPathCalculator::GoalPathCalculator(float wheel_distance, float max_allowed_v
 	this->ctrlp = this->spline->ctrlp();
 }
 
-Path GoalPathCalculator::calculate_path(float direction_start, cv::Point2f position_start, float direction_end, cv::Point2f position_end) {
+Path* GoalPathCalculator::calculate_path(float direction_start, cv::Point2f position_start, float direction_end, cv::Point2f position_end) {
 	this->ctrlp[0] = position_start.x;
 	this->ctrlp[1] = position_start.y;
 	this->ctrlp[2] = 0.01;
@@ -38,5 +38,5 @@ Path GoalPathCalculator::calculate_path(float direction_start, cv::Point2f posit
 	this->ctrlp[17] = 0.01;
 
 	spline->setCtrlp(this->ctrlp);
-	return Path(this->spline, this->wheel_distance, this->max_time_step);
+	return new Path(this->spline, this->wheel_distance, this->max_time_step);
 }
