@@ -1,6 +1,5 @@
 #include <path_calculator.h>
-Path::Path(tinyspline::BSpline spline, float wheel_distance, float max_change_time)
-{
+Path::Path(tinyspline::BSpline spline, float wheel_distance, float max_change_time) {
 	this->spline = spline;
 	this->spline_derive = this->spline.derive();
 	this->spline_derive_sq = this->spline_derive.derive();
@@ -76,6 +75,7 @@ bool Path::next_point_raw (TalonPoint* output, Traversal* traversal, cv::Point2f
 		output->position_right = traversal->right_accum;
 		output->velocity_right = absolute_velocity_right;
 		output->is_end = traversal->spline_index >= 1.0;
+		output->delta_time = max_change_time;
 		return traversal->spline_index < 1.0; //Allow further reads if we're not too far
 }
 

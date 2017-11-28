@@ -17,6 +17,7 @@ class Path : public Renderable {
 			float velocity_left;
 			float position_right;
 			float velocity_right;
+			float delta_time;
 		};
 
 		Path(tinyspline::BSpline spline, float wheel_distance, float max_change_time);
