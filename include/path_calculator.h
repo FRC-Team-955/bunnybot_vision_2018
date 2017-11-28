@@ -7,54 +7,51 @@
 #include <tinysplinecpp.h>
 #include <vector>
 #include <socket.h>
+#include <memory>
 
 class Path : public Renderable {
 	public:
-		struct PrimitivePoint {
+		struct TalonPoint {
 			float position_left;
 			float velocity_left;
-
 			float position_right;
 			float velocity_right;
-		};
-		struct TalonPoint {
-			cv::Point2f display_point_left;
-			cv::Point2f display_point_right;
-			PrimitivePoint primitive;
-			TalonPoint(
-					float position_left, 
-					float velocity_left, 
-					float position_right, 
-					float velocity_right, 
-					cv::Point2f display_point_left, 
-					cv::Point2f display_point_right
-					)
-			{
-				this->display_point_left = display_point_left;
-				this->display_point_right = display_point_right;
-				primitive.position_left = position_left;
-				primitive.velocity_left = velocity_left;
-				primitive.position_right = position_right;
-				primitive.velocity_right = velocity_right;
+			TalonPoint (
+					float position_left,
+					float velocity_left,
+					float position_right,
+					float velocity_right
+					) {
+				//this->position_left = position_left;
+				//this->velocity_left = velocity_left;
+				//this->position_right = position_right;
+				//this->velocity_right = velocity_right;
 			}
-			/*
-			TalonPoint(PrimitivePoint* primitive, cv::Point2f display_point) {
-				this->display_point_left = display_point_left;
-				this->display_point_right = display_point_right;
-				this->primitive = *primitive;
-			}
-			*/
 		};
 
-		//A serializable non-opencv dependent version of TalonPoint
-		const float pi = acos(-1);
-		std::vector<TalonPoint> points;
-		Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_time);
-		Path(Socket* sock);
+		Path(tinyspline::BSpline spline, float wheel_distance, float max_change_time);
+		bool next_point(TalonPoint* output);
+
+		//Inherited members TODO: Remove from header?
 		void render();
 		cv::Rect2f get_size();
 		void color_by(float input);
-		void to_socket (Socket* sock);
-		void from_socket (Socket* sock);
+	private: 
+		struct Traversal { //Contains info about the persistent info along a path
+			float spline_index = 0.0;
+			float left_accum = 0.0;
+			float right_accum = 0.0;
+		} official_traversal; //Official is the front facing one used for external use
+
+		bool next_point_raw(TalonPoint* output, Traversal* traversal, cv::Point2f* out_left, cv::Point2f* out_right);
+
+		tinyspline::BSpline spline;
+		tinyspline::BSpline spline_derive;
+		tinyspline::BSpline spline_derive_sq;
+
+		const float pi = acos(-1);
+
+		float wheel_distance = 0.0;
+		float max_change_time = 0.0;
 };
 #endif

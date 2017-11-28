@@ -4,38 +4,16 @@
 #include <opencv2/opencv.hpp>
 #include <cstring>
 #include <socket.h>
-#include <mutex>
 #include <vector>
 #include <chrono>
-#include <thread>
 
 typedef GoalPathCalculator GPC;
 
 void test_graphical();
 
-Path* latest_path = nullptr;
-std::mutex latest_path_mutex;
-
-void server() {
-	SocketServer sock(5068);
-	while (1) {
-		latest_path_mutex.lock();
-		if (latest_path) {
-			auto local_copy = latest_path;
-			latest_path_mutex.unlock();
-
-			local_copy->to_socket(&sock);
-			delete local_copy;
-		} else {
-			latest_path_mutex.unlock();
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(50)); 
-	}
-}
-
 int main () {
 	GPC *calc = new GPC(0.5, 1.0, 1.0/100.0); //Wheel distance, max velocity, time step
-	std::thread server_thread (server);
+	//SocketServer sock(5068);
 	Renderer::init();
 	Renderer::objects.push_back(calc);
 
@@ -49,11 +27,8 @@ int main () {
 			Renderer::objects.push_back(path);
 			Renderer::update(false);
 			Renderer::objects.pop_back();
-			latest_path_mutex.lock();
-			latest_path = path;
-			latest_path_mutex.unlock();
-			//delete path;
+			//path->to_socket(&sock);
+			delete path;
 		}
 	}
-	server_thread.join();
 }

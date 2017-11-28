@@ -38,5 +38,5 @@ Path* GoalPathCalculator::calculate_path(float direction_start, cv::Point2f posi
 	this->ctrlp[17] = 0.01;
 
 	spline->setCtrlp(this->ctrlp);
-	return new Path(this->spline, this->wheel_distance, this->max_time_step);
+	return new Path(*this->spline, this->wheel_distance, this->max_time_step);
 }
