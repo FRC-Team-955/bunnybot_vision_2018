@@ -12,21 +12,11 @@
 class Path : public Renderable {
 	public:
 		struct TalonPoint {
+			bool is_end; //Signal whether the client should treat this as the end of one spline
 			float position_left;
 			float velocity_left;
 			float position_right;
 			float velocity_right;
-			TalonPoint (
-					float position_left,
-					float velocity_left,
-					float position_right,
-					float velocity_right
-					) {
-				//this->position_left = position_left;
-				//this->velocity_left = velocity_left;
-				//this->position_right = position_right;
-				//this->velocity_right = velocity_right;
-			}
 		};
 
 		Path(tinyspline::BSpline spline, float wheel_distance, float max_change_time);

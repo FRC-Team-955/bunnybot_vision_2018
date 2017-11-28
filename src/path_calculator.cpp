@@ -75,6 +75,7 @@ bool Path::next_point_raw (TalonPoint* output, Traversal* traversal, cv::Point2f
 		output->velocity_left = absolute_velocity_left;
 		output->position_right = traversal->right_accum;
 		output->velocity_right = absolute_velocity_right;
+		output->is_end = traversal->spline_index >= 1.0;
 		return traversal->spline_index < 1.0; //Allow further reads if we're not too far
 }
 
@@ -89,7 +90,7 @@ void Path::color_by(float input) { //Green to black to red from 1.0 to 0.0 to -1
 void Path::render()
 {
 	Traversal traversal;
-	TalonPoint current_talonpoint (0.0, 0.0, 0.0, 0.0);
+	TalonPoint current_talonpoint;
 	cv::Point2f last_left;
 	cv::Point2f last_right;
 	cv::Point2f current_left;
@@ -119,38 +120,7 @@ void Path::render()
 cv::Rect2f Path::get_size()
 {
 	cv::Rect2f rect;
-	/*
-		for (auto& point : points) {
-		cv::Point2f position = point.display_point_left;
-		if (position.x < rect.x) {
-		rect.x = position.x;
-		}
-		if (position.y < rect.y) {
-		rect.y = position.y;
-		}
-		if (position.x > rect.br().x) {
-		rect.width = fabs(rect.x - position.x);
-		}
-		if (position.y > rect.br().y) {
-		rect.height = fabs(rect.y - position.y);
-		}
-		}
-		for (auto& point : points) {
-		cv::Point2f position = point.display_point_left;
-		if (position.x < rect.x) {
-		rect.x = position.x;
-		}
-		if (position.y < rect.y) {
-		rect.y = position.y;
-		}
-		if (position.x > rect.br().x) {
-		rect.width = fabs(rect.x - position.x);
-		}
-		if (position.y > rect.br().y) {
-		rect.height = fabs(rect.y - position.y);
-		}
-		}
-		*/
+	//TODO: Actually do something here :P
 	return rect;
 }
 
