@@ -21,8 +21,11 @@ void server() {
 	while (1) {
 		latest_path_mutex.lock();
 		if (latest_path) {
-			latest_path->to_socket(&sock);
+			auto local_copy = latest_path;
 			latest_path_mutex.unlock();
+
+			local_copy->to_socket(&sock);
+			delete local_copy;
 		} else {
 			latest_path_mutex.unlock();
 		}
@@ -49,7 +52,7 @@ int main () {
 			latest_path_mutex.lock();
 			latest_path = path;
 			latest_path_mutex.unlock();
-			delete path;
+			//delete path;
 		}
 	}
 	server_thread.join();
