@@ -59,8 +59,14 @@ Path::Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_t
 		right_accum += (speed_right / speed_max) * max_allowed_velocity * max_change_time;
 
 		//Add path elements
-		path_left.push_back(TalonPoint(left_accum, max_allowed_velocity * (speed_left / speed_max) * reverse_left, left)); 
-		path_right.push_back(TalonPoint(right_accum, max_allowed_velocity * (speed_right / speed_max) * reverse_right, right)); 
+		points.push_back(TalonPoint(
+					left_accum, 
+					right_accum, 
+					max_allowed_velocity * (speed_left / speed_max) * reverse_left, 
+					max_allowed_velocity * (speed_right / speed_max) * reverse_right, 
+					left,
+					right
+					)); 
 
 		i += (1.0 / speed_max) * max_allowed_velocity * max_change_time;
 	}
@@ -79,25 +85,24 @@ void Path::render()
 {
 	glColor3f(0.0, 0.0, 0.0);
 	glPointSize(9);
-	//glBegin(GL_POINTS);
 	glBegin(GL_LINES);
 
-	glVertex2f(path_left.front().display_point.x, path_left.front().display_point.y);
-	for (auto& left : this->path_left) {
-		color_by(left.primitive.velocity);
-		glVertex2f(left.display_point.x, left.display_point.y);
-		glVertex2f(left.display_point.x, left.display_point.y);
+	glVertex2f(points.front().display_point_left.x, points.front().display_point_left.y);
+	for (auto& point : this->points) {
+		color_by(point.primitive.velocity_left);
+		glVertex2f(point.display_point_left.x, point.display_point_left.y);
+		glVertex2f(point.display_point_left.x, point.display_point_left.y);
 	}
-	glVertex2f(path_left.back().display_point.x, path_left.back().display_point.y);
+	glVertex2f(points.back().display_point_left.x, points.back().display_point_left.y);
 
-	glVertex2f(path_right.front().display_point.x, path_right.front().display_point.y);
-	glColor3f(0.0, 1.0, 1.0);
-	for (auto& right : this->path_right) {
-		color_by(right.primitive.velocity);
-		glVertex2f(right.display_point.x, right.display_point.y);
-		glVertex2f(right.display_point.x, right.display_point.y);
+	glVertex2f(points.front().display_point_right.x, points.front().display_point_right.y);
+	for (auto& point : this->points) {
+		color_by(point.primitive.velocity_right);
+		glVertex2f(point.display_point_right.x, point.display_point_right.y);
+		glVertex2f(point.display_point_right.x, point.display_point_right.y);
 	}
-	glVertex2f(path_right.back().display_point.x, path_right.back().display_point.y);
+	glVertex2f(points.back().display_point_right.x, points.back().display_point_right.y);
+
 
 	glEnd();
 }
@@ -105,8 +110,8 @@ void Path::render()
 cv::Rect2f Path::get_size()
 {
 	cv::Rect2f rect;
-	for (auto& point : path_right) {
-		cv::Point2f position = point.display_point;
+	for (auto& point : points) {
+		cv::Point2f position = point.display_point_left;
 		if (position.x < rect.x) {
 			rect.x = position.x;
 		}
@@ -120,8 +125,8 @@ cv::Rect2f Path::get_size()
 			rect.height = fabs(rect.y - position.y);
 		}
 	}
-	for (auto& point : path_left) {
-		cv::Point2f position = point.display_point;
+	for (auto& point : points) {
+		cv::Point2f position = point.display_point_left;
 		if (position.x < rect.x) {
 			rect.x = position.x;
 		}
@@ -138,18 +143,15 @@ cv::Rect2f Path::get_size()
 	return rect;
 }
 
-//TODO: Use boost?
 void Path::to_socket (Socket* sock) {
-	size_t length = this->path_left.size();
+	size_t length = this->points.size();
 	sock->write_to(&length, sizeof(size_t));
 
-	for (auto& point : this->path_left)
-		sock->write_to(&point.primitive, sizeof(Path::PrimitivePoint));
-
-	for (auto& point : this->path_right)
+	for (auto& point : this->points)
 		sock->write_to(&point.primitive, sizeof(Path::PrimitivePoint));
 }
 
+/*
 Path::Path(Socket* sock) {
 	size_t points;
 	sock->read_to(&points, sizeof(points));
@@ -164,5 +166,6 @@ Path::Path(Socket* sock) {
 		path_right.push_back(TalonPoint(reinterpret_cast<Path::PrimitivePoint*>(buffer), cv::Point2f(0.0, 0.0)));
 	}
 }
+*/
 
 //TODO: Add concat function for paths

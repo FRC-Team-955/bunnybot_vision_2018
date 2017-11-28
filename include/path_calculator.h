@@ -11,28 +11,44 @@
 class Path : public Renderable {
 	public:
 		struct PrimitivePoint {
-			float position;
-			float velocity;
+			float position_left;
+			float velocity_left;
+
+			float position_right;
+			float velocity_right;
 		};
 		struct TalonPoint {
-			cv::Point2f display_point;
+			cv::Point2f display_point_left;
+			cv::Point2f display_point_right;
 			PrimitivePoint primitive;
-			TalonPoint(float position, float velocity, cv::Point2f display_point)
+			TalonPoint(
+					float position_left, 
+					float velocity_left, 
+					float position_right, 
+					float velocity_right, 
+					cv::Point2f display_point_left, 
+					cv::Point2f display_point_right
+					)
 			{
-				this->display_point = display_point;
-				primitive.position = position;
-				primitive.velocity = velocity;
+				this->display_point_left = display_point_left;
+				this->display_point_right = display_point_right;
+				primitive.position_left = position_left;
+				primitive.velocity_left = velocity_left;
+				primitive.position_right = position_right;
+				primitive.velocity_right = velocity_right;
 			}
+			/*
 			TalonPoint(PrimitivePoint* primitive, cv::Point2f display_point) {
-				this->display_point = display_point;
+				this->display_point_left = display_point_left;
+				this->display_point_right = display_point_right;
 				this->primitive = *primitive;
 			}
+			*/
 		};
 
 		//A serializable non-opencv dependent version of TalonPoint
 		const float pi = acos(-1);
-		std::vector<TalonPoint> path_left;
-		std::vector<TalonPoint> path_right;
+		std::vector<TalonPoint> points;
 		Path(tinyspline::BSpline* spline, float wheel_distance, float max_change_time);
 		Path(Socket* sock);
 		void render();

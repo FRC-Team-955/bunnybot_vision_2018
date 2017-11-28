@@ -17,7 +17,7 @@ Path* latest_path = nullptr;
 std::mutex latest_path_mutex;
 
 void server() {
-	SocketServer sock(5069);
+	SocketServer sock(5068);
 	while (1) {
 		latest_path_mutex.lock();
 		if (latest_path) {
