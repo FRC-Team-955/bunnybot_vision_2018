@@ -69,13 +69,21 @@ bool Path::next_point_raw (TalonPoint* output, Traversal* traversal, cv::Point2f
 		float absolute_velocity_left = max_allowed_velocity * (speed_left / speed_max) * reverse_left; 
 		float absolute_velocity_right = max_allowed_velocity * (speed_right / speed_max) * reverse_right; 
 		
+		TalonPoint::Special special = TalonPoint::Special::Middle;
+		if (traversal->spline_index == 0.0) {
+			special = TalonPoint::Special::Beginning;
+		}
+
 		traversal->spline_index += (1.0 / speed_max) * max_allowed_velocity * max_change_time;
+		if (traversal->spline_index >= 1.0) {
+			special = TalonPoint::Special::End;
+		}
 		output->position_left = traversal->left_accum;
 		output->velocity_left = absolute_velocity_left;
 		output->position_right = traversal->right_accum;
 		output->velocity_right = absolute_velocity_right;
-		output->is_end = traversal->spline_index >= 1.0;
 		output->delta_time = max_change_time;
+		output->special = special;
 		return traversal->spline_index < 1.0; //Allow further reads if we're not too far
 }
 

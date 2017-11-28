@@ -29,12 +29,12 @@ int main () {
 			Renderer::update(false);
 
 			Path::TalonPoint next;
-			while(path.next_point(&next)) {
+			do {
 				sock.write_to(&next, sizeof(Path::TalonPoint));
 				bool abort;
 				sock.read_to(&abort, sizeof(bool)); //Read once before we update the spline
 				if (abort) break;	
-			}
+			} while(path.next_point(&next));
 
 			Renderer::objects.pop_back();
 		}
